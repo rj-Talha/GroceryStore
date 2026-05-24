@@ -1,0 +1,27 @@
+name: daana
+description: "Daana — a premium minimal grocery app for Pakistan with AI recipes, voice ordering, and bilingual EN/UR support."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  provider: ^6.1.5+1
+  google_generative_ai: ^0.4.7
+  speech_to_text: ^7.4.0
+  permission_handler: ^12.0.1
+  firebase_core: ^4.9.0
+  cloud_firestore: ^6.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
