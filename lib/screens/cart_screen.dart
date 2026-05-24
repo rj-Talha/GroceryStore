@@ -78,7 +78,7 @@ class _CartScreenState extends State<CartScreen> {
                           children: [
                             SizedBox(
                               width: 56, height: 56,
-                              child: ProductPlaceholder(tone: p.tone, radius: 10),
+                              child: ProductPlaceholder(tone: p.tone, radius: 10, imageUrl: p.imageUrl),
                             ),
                             const SizedBox(width: 12),
                             Expanded(

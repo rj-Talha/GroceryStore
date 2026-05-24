@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../data/products.dart';
 import '../providers/cart_provider.dart';
+import '../providers/catalog_provider.dart';
 import '../services/ai_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
@@ -54,11 +55,16 @@ class _AIIngredientScreenState extends State<AIIngredientScreen> {
     // We need access to the catalog
     final catalog = Provider.of<CatalogProvider>(context, listen: false);
 
-    final results = await _aiService.getIngredientsForDish('$_dish for $servings', catalog.allProducts);
+    final results = await _aiService.getIngredientsForDish(
+      '$_dish for $servings',
+      catalog.allProducts,
+    );
 
     if (mounted) {
       setState(() {
-        ingredients = results.map((e) => _Ingredient(e.$1, e.$2, true)).toList();
+        ingredients = results
+            .map((e) => _Ingredient(e.$1, e.$2, true))
+            .toList();
         _isLoading = false;
       });
     }
@@ -484,7 +490,11 @@ class _IngredientList extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           height: 36,
-                          child: ProductPlaceholder(tone: p.tone, radius: 6),
+                          child: ProductPlaceholder(
+                            tone: p.tone,
+                            radius: 6,
+                            imageUrl: p.imageUrl,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(

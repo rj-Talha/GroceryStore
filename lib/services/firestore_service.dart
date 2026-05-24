@@ -17,7 +17,7 @@ class FirestoreService {
         return Product.fromJson(doc.id, doc.data());
       }).toList();
     } catch (e) {
-      print('Firestore error: \$e');
+      print('Firestore error: $e');
 
       return Products.all.values.toList();
     }
@@ -42,5 +42,23 @@ class FirestoreService {
     }
 
     await batch.commit();
+  }
+
+  // Uploads a massive list of products in chunks of 500
+  Future<void> uploadMassiveCatalog(List<Product> products) async {
+    final chunkSize = 500;
+
+    for (int i = 0; i < products.length; i += chunkSize) {
+      final chunk = products.skip(i).take(chunkSize).toList();
+      final batch = _firestore.batch();
+
+      for (final product in chunk) {
+        final docRef = _firestore.collection('products').doc(product.key);
+        batch.set(docRef, product.toJson());
+      }
+
+      await batch.commit();
+      print('Uploaded chunk ${i ~/ chunkSize + 1}');
+    }
   }
 }

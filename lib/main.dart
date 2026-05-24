@@ -1,8 +1,8 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import 'providers/cart_provider.dart';
 import 'providers/catalog_provider.dart';
@@ -15,7 +15,15 @@ import 'widgets/daana_icon.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: '',
+      appId: '1:692030613513:web:8306467ac528001d7070d8',
+      messagingSenderId: '692030613513',
+      projectId: 'grocerystore-32f0d',
+      storageBucket: 'grocerystore-32f0d.firebasestorage.app',
+    ),
+  );
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

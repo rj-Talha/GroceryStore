@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../data/products.dart';
 import '../providers/cart_provider.dart';
+import '../providers/catalog_provider.dart';
 import '../services/ai_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
@@ -27,8 +28,10 @@ Future<void> showVoiceModal(BuildContext context) {
       return FadeTransition(
         opacity: anim,
         child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero)
-              .animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.05),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
           child: child,
         ),
       );
@@ -43,22 +46,25 @@ class VoiceModal extends StatefulWidget {
   State<VoiceModal> createState() => _VoiceModalState();
 }
 
-class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateMixin {
+class _VoiceModalState extends State<VoiceModal>
+    with SingleTickerProviderStateMixin {
   final SpeechToText _speechToText = SpeechToText();
   final _aiService = AIService();
-  
+
   String _lang = 'ur';
   String _phase = 'init'; // init | listen | parsing | transcribed | items
   String _transcription = '';
   List<(Product, String)> _items = [];
-  
+
   late final AnimationController _wave;
 
   @override
   void initState() {
     super.initState();
-    _wave = AnimationController(vsync: this, duration: const Duration(milliseconds: 700))
-      ..repeat(reverse: true);
+    _wave = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
     _initSpeech();
   }
 
@@ -70,12 +76,12 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
       }
       return;
     }
-    
+
     final hasSpeech = await _speechToText.initialize(
       onError: (e) => print('Speech error: $e'),
       onStatus: (s) => print('Speech status: $s'),
     );
-    
+
     if (hasSpeech && mounted) {
       _start();
     }
@@ -87,9 +93,9 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
       _transcription = '';
       _items = [];
     });
-    
+
     final localeId = _lang == 'ur' ? 'ur_PK' : 'en_US';
-    
+
     await _speechToText.listen(
       onResult: (result) {
         if (mounted) {
@@ -107,14 +113,16 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
 
     // Give it a short delay after listening stops before parsing
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (_speechToText.isNotListening && _transcription.isNotEmpty && mounted) {
+      if (_speechToText.isNotListening &&
+          _transcription.isNotEmpty &&
+          mounted) {
         _processTranscription();
       } else if (mounted && _transcription.isEmpty) {
         setState(() => _phase = 'init');
       }
     });
   }
-  
+
   Future<void> _stop() async {
     await _speechToText.stop();
     if (_transcription.isNotEmpty) {
@@ -126,16 +134,19 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
 
   Future<void> _processTranscription() async {
     setState(() => _phase = 'parsing');
-    
+
     final catalog = Provider.of<CatalogProvider>(context, listen: false);
-    final items = await _aiService.parseVoiceOrder(_transcription, catalog.allProducts);
-    
+    final items = await _aiService.parseVoiceOrder(
+      _transcription,
+      catalog.allProducts,
+    );
+
     if (mounted) {
       setState(() {
         _phase = 'transcribed';
         _items = items;
       });
-      
+
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) setState(() => _phase = 'items');
       });
@@ -183,27 +194,45 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
                   const SizedBox(height: 20),
                   GestureDetector(
                     onTap: _phase == 'listen' ? _stop : _start,
-                    child: Center(child: _MicVisual(listening: _phase == 'listen', wave: _wave)),
+                    child: Center(
+                      child: _MicVisual(
+                        listening: _phase == 'listen',
+                        wave: _wave,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Center(
                     child: Text(
                       _phase == 'listen'
-                          ? (_lang == 'ur' ? 'سن رہا ہوں… (Tap to stop)' : 'Listening… (Tap to stop)')
-                          : _phase == 'parsing' 
-                              ? 'Parsing...' 
-                              : _phase == 'init' ? 'Tap mic to start' : 'Got it.',
+                          ? (_lang == 'ur'
+                                ? 'سن رہا ہوں… (Tap to stop)'
+                                : 'Listening… (Tap to stop)')
+                          : _phase == 'parsing'
+                          ? 'Parsing...'
+                          : _phase == 'init'
+                          ? 'Tap mic to start'
+                          : 'Got it.',
                       style: _lang == 'ur' && _phase == 'listen'
                           ? Daana.urdu(size: 14, color: Daana.ink50)
                           : Daana.sans(size: 13, color: Daana.ink50),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _TranscriptCard(lang: _lang, phase: _phase, transcription: _transcription),
+                  _TranscriptCard(
+                    lang: _lang,
+                    phase: _phase,
+                    transcription: _transcription,
+                  ),
                   if (_phase == 'items') ...[
                     const SizedBox(height: 14),
                     if (_items.isEmpty)
-                      Center(child: Text("Couldn't find any products.", style: Daana.sans(size: 14, color: Daana.ink50)))
+                      Center(
+                        child: Text(
+                          "Couldn't find any products.",
+                          style: Daana.sans(size: 14, color: Daana.ink50),
+                        ),
+                      )
                     else
                       ..._items.map((it) {
                         return Padding(
@@ -214,23 +243,36 @@ class _VoiceModalState extends State<VoiceModal> with SingleTickerProviderStateM
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: Btn('Keep listening', variant: BtnVariant.quiet, onPressed: _start)),
+                        Expanded(
+                          child: Btn(
+                            'Keep listening',
+                            variant: BtnVariant.quiet,
+                            onPressed: _start,
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
                           child: Btn(
                             'Add ${_items.length} to cart',
                             iconRight: 'arrowR',
-                            onPressed: _items.isEmpty ? null : () {
-                              final cart = context.read<CartProvider>();
-                              for (var item in _items) {
-                                cart.addItem(item.$1, 1);
-                              }
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('${_items.length} items added to cart'), duration: const Duration(seconds: 2))
-                              );
-                            },
+                            onPressed: _items.isEmpty
+                                ? null
+                                : () {
+                                    final cart = context.read<CartProvider>();
+                                    for (var item in _items) {
+                                      cart.addItem(item.$1, 1);
+                                    }
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          '${_items.length} items added to cart',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  },
                           ),
                         ),
                       ],
@@ -270,8 +312,8 @@ class _LangToggle extends StatelessWidget {
             style: id == 'ur' && !active
                 ? Daana.urdu(size: 12, color: Daana.ink, height: 1.0)
                 : id == 'ur' && active
-                    ? Daana.urdu(size: 12, color: Daana.bg, height: 1.0)
-                    : Daana.sans(size: 12, color: active ? Daana.bg : Daana.ink),
+                ? Daana.urdu(size: 12, color: Daana.bg, height: 1.0)
+                : Daana.sans(size: 12, color: active ? Daana.bg : Daana.ink),
           ),
         ),
       );
@@ -319,8 +361,8 @@ class _MicVisual extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: Daana.moss.withOpacity(0.18 + 0.06 * wave.value),
                       ),
-                      transform:
-                          Matrix4.identity()..scale(1 + 0.06 * wave.value),
+                      transform: Matrix4.identity()
+                        ..scale(1 + 0.06 * wave.value),
                     );
                   },
                 ),
@@ -331,7 +373,9 @@ class _MicVisual extends StatelessWidget {
                   color: Daana.moss,
                   shape: BoxShape.circle,
                 ),
-                child: const Center(child: DaanaIcon('mic', size: 28, color: Daana.bg)),
+                child: const Center(
+                  child: DaanaIcon('mic', size: 28, color: Daana.bg),
+                ),
               ),
             ],
           ),
@@ -347,7 +391,8 @@ class _MicVisual extends StatelessWidget {
                 children: List.generate(28, (i) {
                   final base = 4 + (math.sin(i * 0.7) + 1) * 12;
                   final factor = listening
-                      ? (0.6 + 0.4 * math.sin(wave.value * 6.28 + i * 0.4)).abs()
+                      ? (0.6 + 0.4 * math.sin(wave.value * 6.28 + i * 0.4))
+                            .abs()
                       : 0.3;
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 1.5),
@@ -374,7 +419,11 @@ class _TranscriptCard extends StatelessWidget {
   final String lang;
   final String phase;
   final String transcription;
-  const _TranscriptCard({required this.lang, required this.phase, required this.transcription});
+  const _TranscriptCard({
+    required this.lang,
+    required this.phase,
+    required this.transcription,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -404,7 +453,11 @@ class _TranscriptCard extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: Text(
                       transcription,
-                      style: Daana.urdu(size: 22, color: Daana.ink, height: 1.6),
+                      style: Daana.urdu(
+                        size: 22,
+                        color: Daana.ink,
+                        height: 1.6,
+                      ),
                     ),
                   )
                 else
@@ -437,7 +490,11 @@ class _MatchedRow extends StatelessWidget {
           SizedBox(
             width: 40,
             height: 40,
-            child: ProductPlaceholder(tone: product.tone, radius: 8),
+            child: ProductPlaceholder(
+              tone: product.tone,
+              radius: 8,
+              imageUrl: product.imageUrl,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

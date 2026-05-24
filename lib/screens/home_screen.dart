@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../data/products.dart';
 import '../providers/catalog_provider.dart';
+import '../services/catalog_generator.dart';
+import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
@@ -19,7 +21,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
-    
+
     if (catalog.isLoading) {
       return Container(
         color: Daana.bg,
@@ -28,7 +30,7 @@ class HomeScreen extends StatelessWidget {
         ),
       );
     }
-    
+
     final trending = catalog.trendingProducts;
     final topTrending = trending.isNotEmpty ? trending.first : null;
 
@@ -62,8 +64,50 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _AddressBar extends StatelessWidget {
+class _AddressBar extends StatefulWidget {
   const _AddressBar();
+
+  @override
+  State<_AddressBar> createState() => _AddressBarState();
+}
+
+class _AddressBarState extends State<_AddressBar> {
+  bool _isUploading = false;
+
+  Future<void> _uploadCatalog() async {
+    setState(() => _isUploading = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Generating 2000 products...')),
+    );
+
+    try {
+      final products = CatalogGenerator.generate(2000);
+      final firestoreService = FirestoreService();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading to Firestore in chunks...')),
+      );
+
+      await firestoreService.uploadMassiveCatalog(products);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Upload complete! Restart app to fetch new data.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +134,25 @@ class _AddressBar extends StatelessWidget {
               ],
             ),
           ),
+          if (_isUploading)
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Daana.moss,
+                ),
+              ),
+            )
+          else
+            IconButton(
+              icon: const DaanaIcon('sparkle', size: 20, color: Daana.moss),
+              tooltip: 'Generate Massive Catalog',
+              onPressed: _uploadCatalog,
+            ),
+          const SizedBox(width: 8),
           Container(
             width: 40,
             height: 40,
@@ -194,6 +257,7 @@ class _HeroCard extends StatelessWidget {
                         label: product.label,
                         tone: product.tone,
                         radius: 70,
+                        imageUrl: product.imageUrl,
                       ),
                     ),
                   ),
@@ -336,10 +400,7 @@ class _CategoriesSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      c.$1,
-                      style: Daana.sans(size: 11.5, height: 1.1),
-                    ),
+                    Text(c.$1, style: Daana.sans(size: 11.5, height: 1.1)),
                     Directionality(
                       textDirection: TextDirection.rtl,
                       child: Text(
@@ -445,7 +506,7 @@ class _RecommendationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
     final recs = catalog.recommendations;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

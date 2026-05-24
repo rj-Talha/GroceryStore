@@ -10,6 +10,7 @@ class Product {
   final String tone; // 'a' | 'b' | 'c' | 'd' | 'e'
   final int salesCount;
   final int trendingScore;
+  final String? imageUrl;
 
   const Product({
     required this.key,
@@ -22,6 +23,7 @@ class Product {
     required this.tone,
     this.salesCount = 0,
     this.trendingScore = 0,
+    this.imageUrl,
   });
 
   factory Product.fromJson(String key, Map<String, dynamic> json) {
@@ -36,6 +38,7 @@ class Product {
       tone: json['tone'] as String? ?? 'd',
       salesCount: json['salesCount'] as int? ?? 0,
       trendingScore: json['trendingScore'] as int? ?? 0,
+      imageUrl: json['imageUrl'] as String?,
     );
   }
 
@@ -50,6 +53,7 @@ class Product {
       'tone': tone,
       'salesCount': salesCount,
       'trendingScore': trendingScore,
+      if (imageUrl != null) 'imageUrl': imageUrl,
     };
   }
 }

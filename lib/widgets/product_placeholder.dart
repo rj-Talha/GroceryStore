@@ -8,6 +8,7 @@ class ProductPlaceholder extends StatelessWidget {
   final String tone;
   final double radius;
   final bool square;
+  final String? imageUrl;
 
   const ProductPlaceholder({
     super.key,
@@ -15,6 +16,7 @@ class ProductPlaceholder extends StatelessWidget {
     this.tone = 'a',
     this.radius = 12,
     this.square = true,
+    this.imageUrl,
   });
 
   @override
@@ -30,7 +32,7 @@ class ProductPlaceholder extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               CustomPaint(painter: _StripePainter(t.stripe)),
-              if (label.isNotEmpty)
+              if (label.isNotEmpty && imageUrl == null)
                 Center(
                   child: Text(
                     label.toUpperCase(),
@@ -40,6 +42,12 @@ class ProductPlaceholder extends StatelessWidget {
                       letterSpacing: 1.0,
                     ),
                   ),
+                ),
+              if (imageUrl != null && imageUrl!.isNotEmpty)
+                Image.network(
+                  imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
                 ),
             ],
           ),

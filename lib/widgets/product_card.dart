@@ -37,7 +37,7 @@ class ProductCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                ProductPlaceholder(label: product.label, tone: product.tone, radius: 12),
+                ProductPlaceholder(label: product.label, tone: product.tone, radius: 12, imageUrl: product.imageUrl),
                 if (product.deal != null)
                   Positioned(
                     top: 8,

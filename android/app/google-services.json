@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "692030613513",
+    "project_id": "grocerystore-32f0d",
+    "storage_bucket": "grocerystore-32f0d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:692030613513:android:0488382210a767a57070d8",
+        "android_client_info": {
+          "package_name": "pk.daana.daana"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDamy8GJadwfTeX6epZaGy-h0wU-PIucvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
