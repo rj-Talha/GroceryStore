@@ -1,28 +1,25 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import 'firebase_options.dart';
 import 'providers/cart_provider.dart';
 import 'providers/catalog_provider.dart';
 import 'screens/ai_ingredient_screen.dart';
 import 'screens/ai_recipe_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/sign_in_screen.dart';
 import 'theme/tokens.dart';
 import 'widgets/daana_icon.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: FirebaseOptions(
-      apiKey: 'AIzaSyA419bEtzO8BBi29voJ2VyQ29s5uDVQTK0',
-      appId: '1:692030613513:web:8306467ac528001d7070d8',
-      messagingSenderId: '692030613513',
-      projectId: 'grocerystore-32f0d',
-      storageBucket: 'grocerystore-32f0d.firebasestorage.app',
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
 
   SystemChrome.setSystemUIOverlayStyle(
@@ -64,7 +61,41 @@ class DaanaApp extends StatelessWidget {
         splashColor: Daana.ink08,
         highlightColor: Daana.ink08,
       ),
-      home: const Shell(),
+      home: const AuthGate(),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _showSignIn = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Daana.bg,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Stack(
+          children: [
+            const Shell(),
+            if (!snapshot.hasData && _showSignIn)
+              SignInScreen(onClose: () => setState(() => _showSignIn = false)),
+          ],
+        );
+      },
     );
   }
 }
