@@ -94,6 +94,7 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() {
         _statusMessage = error.message ?? 'Authentication failed';
         _statusMessageColor = Colors.red.shade700;
+        
       });
     } catch (error) {
       setState(() {
