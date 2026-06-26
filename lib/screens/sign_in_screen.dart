@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/tokens.dart';
+import 'admin_portal_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, this.onClose});
@@ -85,9 +86,23 @@ class _SignInScreenState extends State<SignInScreen> {
           _resetForm(clearStatus: false);
         });
       } else {
+        final email = _emailController.text.trim();
+        final password = _passwordController.text.trim();
+        if (isAdminCredential(email, password)) {
+          await auth.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
+          );
+          return;
+        }
+
         await auth.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+          email: email,
+          password: password,
         );
       }
     } on FirebaseAuthException catch (error) {

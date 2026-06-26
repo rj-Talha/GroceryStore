@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/cart_provider.dart';
 import 'providers/catalog_provider.dart';
+import 'screens/admin_portal_screen.dart';
 import 'screens/ai_ingredient_screen.dart';
 import 'screens/ai_recipe_screen.dart';
 import 'screens/cart_screen.dart';
@@ -86,6 +87,11 @@ class _AuthGateState extends State<AuthGate> {
             backgroundColor: Daana.bg,
             body: Center(child: CircularProgressIndicator()),
           );
+        }
+
+        final user = snapshot.data;
+        if (user != null && isAdminCredential(user.email, null)) {
+          return const AdminPortalScreen();
         }
 
         return Stack(

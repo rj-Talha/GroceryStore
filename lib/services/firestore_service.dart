@@ -23,6 +23,10 @@ class FirestoreService {
     }
   }
 
+  Future<void> updateProduct(String productId, Map<String, dynamic> data) async {
+    await _firestore.collection('products').doc(productId).update(data);
+  }
+
   Future<void> seedProducts() async {
     final batch = _firestore.batch();
 
