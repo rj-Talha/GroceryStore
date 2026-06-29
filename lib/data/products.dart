@@ -1,4 +1,116 @@
 /// Sample product catalog mirroring screens-shared.jsx PRODUCTS.
+class OrderItem {
+  final String productId;
+  final String productName;
+  final String unit;
+  final int quantity;
+  final int unitPrice;
+  final int lineTotal;
+
+  const OrderItem({
+    required this.productId,
+    required this.productName,
+    required this.unit,
+    required this.quantity,
+    required this.unitPrice,
+    required this.lineTotal,
+  });
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      productId: json['productId'] as String? ?? '',
+      productName: json['productName'] as String? ?? '',
+      unit: json['unit'] as String? ?? '',
+      quantity: json['quantity'] as int? ?? 0,
+      unitPrice: json['unitPrice'] as int? ?? 0,
+      lineTotal: json['lineTotal'] as int? ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'productId': productId,
+      'productName': productName,
+      'unit': unit,
+      'quantity': quantity,
+      'unitPrice': unitPrice,
+      'lineTotal': lineTotal,
+    };
+  }
+}
+
+class StoreOrder {
+  final String id;
+  final String customerName;
+  final String phone;
+  final String email;
+  final String address;
+  final String paymentMethod;
+  final String status;
+  final int subtotal;
+  final int deliveryFee;
+  final int serviceFee;
+  final int total;
+  final String createdAt;
+  final List<OrderItem> items;
+
+  const StoreOrder({
+    required this.id,
+    required this.customerName,
+    required this.phone,
+    required this.email,
+    required this.address,
+    required this.paymentMethod,
+    required this.status,
+    required this.subtotal,
+    required this.deliveryFee,
+    required this.serviceFee,
+    required this.total,
+    required this.createdAt,
+    required this.items,
+  });
+
+  factory StoreOrder.fromJson(String id, Map<String, dynamic> json) {
+    final itemsJson = json['items'] as List<dynamic>? ?? const [];
+
+    return StoreOrder(
+      id: id,
+      customerName: json['customerName'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      paymentMethod: json['paymentMethod'] as String? ?? 'Cash on delivery',
+      status: json['status'] as String? ?? 'processing',
+      subtotal: json['subtotal'] as int? ?? 0,
+      deliveryFee: json['deliveryFee'] as int? ?? 0,
+      serviceFee: json['serviceFee'] as int? ?? 0,
+      total: json['total'] as int? ?? 0,
+      createdAt:
+          json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
+      items: itemsJson
+          .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'customerName': customerName,
+      'phone': phone,
+      'email': email,
+      'address': address,
+      'paymentMethod': paymentMethod,
+      'status': status,
+      'subtotal': subtotal,
+      'deliveryFee': deliveryFee,
+      'serviceFee': serviceFee,
+      'total': total,
+      'createdAt': createdAt,
+      'items': items.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
 class Product {
   final String key;
   final String name;
@@ -60,116 +172,230 @@ class Product {
 
 class Products {
   static const mangoesSindhri = Product(
-    key: 'mangoesSindhri', name: 'Sindhri Mango', unit: '1 kg · seasonal',
-    price: 320, label: 'mango', tone: 'c',
+    key: 'mangoesSindhri',
+    name: 'Sindhri Mango',
+    unit: '1 kg · seasonal',
+    price: 320,
+    label: 'mango',
+    tone: 'c',
   );
   static const bananas = Product(
-    key: 'bananas', name: 'Banana, ripe', unit: '6 pcs · ~750 g',
-    price: 180, label: 'banana', tone: 'c',
+    key: 'bananas',
+    name: 'Banana, ripe',
+    unit: '6 pcs · ~750 g',
+    price: 180,
+    label: 'banana',
+    tone: 'c',
   );
   static const tomatoes = Product(
-    key: 'tomatoes', name: 'Tomato, vine', unit: '500 g',
-    price: 95, label: 'tomato', tone: 'b',
+    key: 'tomatoes',
+    name: 'Tomato, vine',
+    unit: '500 g',
+    price: 95,
+    label: 'tomato',
+    tone: 'b',
   );
   static const onions = Product(
-    key: 'onions', name: 'Onion, red', unit: '1 kg',
-    price: 130, label: 'onion', tone: 'd',
+    key: 'onions',
+    name: 'Onion, red',
+    unit: '1 kg',
+    price: 130,
+    label: 'onion',
+    tone: 'd',
   );
   static const potatoes = Product(
-    key: 'potatoes', name: 'Potato, washed', unit: '1 kg',
-    price: 110, label: 'potato', tone: 'd',
+    key: 'potatoes',
+    name: 'Potato, washed',
+    unit: '1 kg',
+    price: 110,
+    label: 'potato',
+    tone: 'd',
   );
   static const spinach = Product(
-    key: 'spinach', name: 'Palak (spinach)', unit: '1 bunch · 250 g',
-    price: 80, label: 'palak', tone: 'b',
+    key: 'spinach',
+    name: 'Palak (spinach)',
+    unit: '1 bunch · 250 g',
+    price: 80,
+    label: 'palak',
+    tone: 'b',
   );
   static const coriander = Product(
-    key: 'coriander', name: 'Hara Dhania', unit: '100 g',
-    price: 30, label: 'dhania', tone: 'b',
+    key: 'coriander',
+    name: 'Hara Dhania',
+    unit: '100 g',
+    price: 30,
+    label: 'dhania',
+    tone: 'b',
   );
   static const ginger = Product(
-    key: 'ginger', name: 'Ginger', unit: '250 g',
-    price: 145, label: 'adrak', tone: 'd',
+    key: 'ginger',
+    name: 'Ginger',
+    unit: '250 g',
+    price: 145,
+    label: 'adrak',
+    tone: 'd',
   );
   static const garlic = Product(
-    key: 'garlic', name: 'Garlic, peeled', unit: '200 g',
-    price: 220, label: 'lehsan', tone: 'd',
+    key: 'garlic',
+    name: 'Garlic, peeled',
+    unit: '200 g',
+    price: 220,
+    label: 'lehsan',
+    tone: 'd',
   );
   static const chickenBreast = Product(
-    key: 'chickenBreast', name: 'Chicken Breast', unit: '500 g · zabiha',
-    price: 720, old: 820, deal: 12, label: 'chicken', tone: 'a',
+    key: 'chickenBreast',
+    name: 'Chicken Breast',
+    unit: '500 g · zabiha',
+    price: 720,
+    old: 820,
+    deal: 12,
+    label: 'chicken',
+    tone: 'a',
   );
   static const beefMince = Product(
-    key: 'beefMince', name: 'Beef Qeema, lean', unit: '500 g',
-    price: 990, label: 'qeema', tone: 'a',
+    key: 'beefMince',
+    name: 'Beef Qeema, lean',
+    unit: '500 g',
+    price: 990,
+    label: 'qeema',
+    tone: 'a',
   );
   static const eggs = Product(
-    key: 'eggs', name: 'Eggs, brown', unit: 'dozen',
-    price: 360, label: 'eggs', tone: 'd',
+    key: 'eggs',
+    name: 'Eggs, brown',
+    unit: 'dozen',
+    price: 360,
+    label: 'eggs',
+    tone: 'd',
   );
   static const milk = Product(
-    key: 'milk', name: "Olper's Milk", unit: '1 L · UHT',
-    price: 290, label: 'milk', tone: 'd',
+    key: 'milk',
+    name: "Olper's Milk",
+    unit: '1 L · UHT',
+    price: 290,
+    label: 'milk',
+    tone: 'd',
   );
   static const yogurt = Product(
-    key: 'yogurt', name: 'Dahi, fresh', unit: '500 g',
-    price: 210, label: 'dahi', tone: 'd',
+    key: 'yogurt',
+    name: 'Dahi, fresh',
+    unit: '500 g',
+    price: 210,
+    label: 'dahi',
+    tone: 'd',
   );
   static const butter = Product(
-    key: 'butter', name: 'Salted Butter', unit: '227 g',
-    price: 540, label: 'makhan', tone: 'c',
+    key: 'butter',
+    name: 'Salted Butter',
+    unit: '227 g',
+    price: 540,
+    label: 'makhan',
+    tone: 'c',
   );
   static const basmati = Product(
-    key: 'basmati', name: 'Basmati Rice, aged', unit: '5 kg · super kernel',
-    price: 2150, label: 'basmati', tone: 'c',
+    key: 'basmati',
+    name: 'Basmati Rice, aged',
+    unit: '5 kg · super kernel',
+    price: 2150,
+    label: 'basmati',
+    tone: 'c',
   );
   static const atta = Product(
-    key: 'atta', name: 'Chakki Atta', unit: '10 kg',
-    price: 1480, label: 'atta', tone: 'c',
+    key: 'atta',
+    name: 'Chakki Atta',
+    unit: '10 kg',
+    price: 1480,
+    label: 'atta',
+    tone: 'c',
   );
   static const lentils = Product(
-    key: 'lentils', name: 'Daal Masoor', unit: '1 kg',
-    price: 480, label: 'masoor', tone: 'c',
+    key: 'lentils',
+    name: 'Daal Masoor',
+    unit: '1 kg',
+    price: 480,
+    label: 'masoor',
+    tone: 'c',
   );
   static const chickpeas = Product(
-    key: 'chickpeas', name: 'Kabuli Chana', unit: '1 kg',
-    price: 520, label: 'chana', tone: 'c',
+    key: 'chickpeas',
+    name: 'Kabuli Chana',
+    unit: '1 kg',
+    price: 520,
+    label: 'chana',
+    tone: 'c',
   );
   static const oil = Product(
-    key: 'oil', name: 'Sunflower Oil', unit: '3 L tin',
-    price: 1690, label: 'oil', tone: 'b',
+    key: 'oil',
+    name: 'Sunflower Oil',
+    unit: '3 L tin',
+    price: 1690,
+    label: 'oil',
+    tone: 'b',
   );
   static const chai = Product(
-    key: 'chai', name: 'Tapal Danedar', unit: '430 g',
-    price: 1090, label: 'chai', tone: 'a',
+    key: 'chai',
+    name: 'Tapal Danedar',
+    unit: '430 g',
+    price: 1090,
+    label: 'chai',
+    tone: 'a',
   );
   static const sugar = Product(
-    key: 'sugar', name: 'White Sugar', unit: '1 kg',
-    price: 145, label: 'cheeni', tone: 'd',
+    key: 'sugar',
+    name: 'White Sugar',
+    unit: '1 kg',
+    price: 145,
+    label: 'cheeni',
+    tone: 'd',
   );
   static const bread = Product(
-    key: 'bread', name: 'Sourdough Boule', unit: '500 g · daily',
-    price: 420, label: 'bread', tone: 'c',
+    key: 'bread',
+    name: 'Sourdough Boule',
+    unit: '500 g · daily',
+    price: 420,
+    label: 'bread',
+    tone: 'c',
   );
   static const naan = Product(
-    key: 'naan', name: 'Naan, tandoori', unit: '4 pcs',
-    price: 160, label: 'naan', tone: 'c',
+    key: 'naan',
+    name: 'Naan, tandoori',
+    unit: '4 pcs',
+    price: 160,
+    label: 'naan',
+    tone: 'c',
   );
   static const oranges = Product(
-    key: 'oranges', name: 'Kinnow Orange', unit: '1 kg',
-    price: 240, label: 'kinnow', tone: 'c',
+    key: 'oranges',
+    name: 'Kinnow Orange',
+    unit: '1 kg',
+    price: 240,
+    label: 'kinnow',
+    tone: 'c',
   );
   static const apples = Product(
-    key: 'apples', name: 'Kala Kulu Apple', unit: '1 kg',
-    price: 380, label: 'apple', tone: 'c',
+    key: 'apples',
+    name: 'Kala Kulu Apple',
+    unit: '1 kg',
+    price: 380,
+    label: 'apple',
+    tone: 'c',
   );
   static const paneer = Product(
-    key: 'paneer', name: 'Paneer, fresh', unit: '200 g',
-    price: 320, label: 'paneer', tone: 'd',
+    key: 'paneer',
+    name: 'Paneer, fresh',
+    unit: '200 g',
+    price: 320,
+    label: 'paneer',
+    tone: 'd',
   );
   static const greenChili = Product(
-    key: 'greenChili', name: 'Hari Mirch', unit: '100 g',
-    price: 25, label: 'mirch', tone: 'b',
+    key: 'greenChili',
+    name: 'Hari Mirch',
+    unit: '100 g',
+    price: 25,
+    label: 'mirch',
+    tone: 'b',
   );
 
   static const Map<String, Product> all = {

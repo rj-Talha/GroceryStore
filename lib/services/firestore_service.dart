@@ -23,8 +23,36 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateProduct(String productId, Map<String, dynamic> data) async {
+  Future<void> updateProduct(
+    String productId,
+    Map<String, dynamic> data,
+  ) async {
     await _firestore.collection('products').doc(productId).update(data);
+  }
+
+  Future<List<StoreOrder>> getOrders() async {
+    try {
+      final snapshot = await _firestore
+          .collection('orders')
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs
+          .map((doc) => StoreOrder.fromJson(doc.id, doc.data()))
+          .toList();
+    } catch (e) {
+      print('Firestore error: $e');
+      return [];
+    }
+  }
+
+  Future<void> addOrder(Map<String, dynamic> data) async {
+    await _firestore.collection('orders').add(data);
+  }
+
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    await _firestore.collection('orders').doc(orderId).update({
+      'status': status,
+    });
   }
 
   Future<void> seedProducts() async {
