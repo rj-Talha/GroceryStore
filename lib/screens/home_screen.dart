@@ -34,34 +34,260 @@ class HomeScreen extends StatelessWidget {
     final trending = catalog.trendingProducts;
     final topTrending = trending.isNotEmpty ? trending.first : null;
 
-    return Container(
-      color: Daana.bg,
-      child: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
+      children: [
+        Container(
+          color: Daana.bg,
+          child: SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _AddressBar(),
+                  const SizedBox(height: 12),
+                  const _SearchBar(),
+                  const SizedBox(height: 16),
+                  if (topTrending != null) _HeroCard(product: topTrending),
+                  const SizedBox(height: 24),
+                  const _CategoriesSection(),
+                  const SizedBox(height: 20),
+                  const _AITile(),
+                  const SizedBox(height: 24),
+                  const _RecommendationsSection(),
+                  const SizedBox(height: 24),
+                  const _MangoList(),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 20,
+          bottom: 92,
+          child: _AiChatFab(onPressed: () => _openFaqSheet(context)),
+        ),
+      ],
+    );
+  }
+
+  void _openFaqSheet(BuildContext context) {
+    final faqs = <_FaqItem>[
+      _FaqItem(
+        question: 'How much time does delivery take?',
+        answer:
+            'Most orders are delivered within 6 to 8 hours, depending on your area and the items in your cart.',
+      ),
+      _FaqItem(
+        question: 'How are fruits and vegetables kept fresh?',
+        answer:
+            'Fresh produce is stored in temperature-controlled conditions and packed carefully to preserve freshness during delivery.',
+      ),
+      _FaqItem(
+        question: 'How is chicken kept fresh?',
+        answer:
+            'Chicken is kept chilled in sealed packaging and delivered as quickly as possible to maintain food safety and quality.',
+      ),
+      _FaqItem(
+        question: 'Can I change my delivery time?',
+        answer:
+            'Yes, you can contact support to request a different delivery slot whenever available.',
+      ),
+    ];
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.black.withOpacity(0.18),
+        transitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (routeContext, animation, secondaryAnimation) {
+          return Stack(
             children: [
-              const _AddressBar(),
-              const SizedBox(height: 12),
-              const _SearchBar(),
-              const SizedBox(height: 16),
-              if (topTrending != null) _HeroCard(product: topTrending),
-              const SizedBox(height: 24),
-              const _CategoriesSection(),
-              const SizedBox(height: 20),
-              const _AITile(),
-              const SizedBox(height: 24),
-              const _RecommendationsSection(),
-              const SizedBox(height: 24),
-              const _MangoList(),
+              GestureDetector(
+                onTap: () => Navigator.of(routeContext).pop(),
+                child: Container(color: Colors.transparent),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: SlideTransition(
+                  position: animation.drive(
+                    Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).chain(CurveTween(curve: Curves.easeOutCubic)),
+                  ),
+                  child: Material(
+                    color: Daana.bg,
+                    child: SafeArea(
+                      child: Container(
+                        width: 320,
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: const BoxDecoration(
+                                    color: Daana.moss,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.smart_toy_outlined,
+                                      color: Daana.bg,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'AI Chatbot',
+                                        style: Daana.serif(size: 20, height: 1.0),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Frequently asked questions',
+                                        style: Daana.sans(
+                                          size: 13,
+                                          color: Daana.ink50,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Expanded(
+                              child: ListView.separated(
+                                itemCount: faqs.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                itemBuilder: (_, index) {
+                                  final item = faqs[index];
+                                  return Theme(
+                                    data: Theme.of(routeContext).copyWith(
+                                      dividerColor: Colors.transparent,
+                                    ),
+                                    child: ExpansionTile(
+                                      tilePadding: EdgeInsets.zero,
+                                      childrenPadding: const EdgeInsets.only(
+                                        left: 4,
+                                        top: 4,
+                                        bottom: 4,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      collapsedShape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      backgroundColor: Daana.card,
+                                      collapsedBackgroundColor: Daana.card,
+                                      title: Text(
+                                        item.question,
+                                        style: Daana.sans(size: 14),
+                                      ),
+                                      iconColor: Daana.moss,
+                                      collapsedIconColor: Daana.ink50,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+                                          child: Text(
+                                            item.answer,
+                                            style: Daana.sans(
+                                              size: 13,
+                                              color: Daana.ink70,
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AiChatFab extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _AiChatFab({required this.onPressed});
+
+  @override
+  State<_AiChatFab> createState() => _AiChatFabState();
+}
+
+class _AiChatFabState extends State<_AiChatFab> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        width: _hovered ? 150 : 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: Daana.moss,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(999),
+            onTap: widget.onPressed,
+            child: Center(
+              child: _hovered
+                  ? Text(
+                      'AI Chatbot',
+                      style: Daana.sans(size: 14, color: Daana.bg, weight: FontWeight.w600),
+                    )
+                  : const Icon(Icons.smart_toy_outlined, color: Daana.bg, size: 22),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _FaqItem {
+  final String question;
+  final String answer;
+
+  const _FaqItem({required this.question, required this.answer});
 }
 
 class _AddressBar extends StatefulWidget {

@@ -4,12 +4,20 @@ import '../services/firestore_service.dart';
 
 class CatalogProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   List<Product> _allProducts = [];
   bool _isLoading = true;
   String? _error;
 
-  CatalogProvider() {
+  CatalogProvider({List<Product>? initialProducts, bool initialIsLoading = true}) {
+    _allProducts = initialProducts ?? [];
+    _isLoading = initialIsLoading;
+
+    if (initialProducts != null) {
+      notifyListeners();
+      return;
+    }
+
     _init();
   }
 
