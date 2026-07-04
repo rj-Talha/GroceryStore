@@ -204,4 +204,79 @@ Output raw JSON array only, no markdown blocks.
       return [];
     }
   }
+
+  Future<String> answerQuery(String query) async {
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) {
+      return 'Please ask a question about this e-grocery store.';
+    }
+
+    if (!isConfigured) {
+      await Future.delayed(const Duration(milliseconds: 900));
+      return _mockQueryResponse(trimmedQuery);
+    }
+
+    final prompt = '''
+You are an AI assistant for an e-grocery store app. Only answer questions related to this grocery store, its products, orders, delivery, freshness, checkout, payment, and customer service.
+If the user's question is unrelated to e-grocery or this store, reply exactly:
+I'm sorry, I can only answer questions about this e-grocery store.
+
+Question: "$trimmedQuery"
+''';
+
+    try {
+      final response = await _model.generateContent([Content.text(prompt)]);
+      return response.text?.trim() ??
+          'I\'m sorry, I can only answer questions about this e-grocery store.';
+    } catch (e) {
+      print('AI Service Chat Error: $e');
+      return 'I\'m sorry, I can only answer questions about this e-grocery store.';
+    }
+  }
+
+  String _mockQueryResponse(String query) {
+    final lower = query.toLowerCase();
+    final groceryKeywords = [
+      'delivery',
+      'order',
+      'fresh',
+      'fruits',
+      'vegetable',
+      'chicken',
+      'checkout',
+      'payment',
+      'cart',
+      'store',
+      'availability',
+      'slot',
+      'delivery time',
+      'return',
+      'refund',
+      'pickup',
+      'address',
+      'customer service',
+    ];
+
+    if (!groceryKeywords.any(lower.contains)) {
+      return 'I\'m sorry, I can only answer questions about this e-grocery store.';
+    }
+
+    if (lower.contains('delivery')) {
+      return 'Most orders are delivered within 6 to 8 hours, depending on your area and items in your cart.';
+    }
+    if (lower.contains('fresh') || lower.contains('fruits') || lower.contains('vegetable')) {
+      return 'Fresh produce is kept in temperature-controlled storage and packed carefully to preserve freshness during delivery.';
+    }
+    if (lower.contains('chicken')) {
+      return 'Chicken is chilled in sealed packaging and delivered quickly to maintain food safety and quality.';
+    }
+    if (lower.contains('checkout') || lower.contains('payment')) {
+      return 'You can complete your order at checkout using the available payment options and then wait for a delivery confirmation.';
+    }
+    if (lower.contains('refund') || lower.contains('return')) {
+      return 'For returns and refunds, please contact support through the app with your order details.';
+    }
+
+    return 'This grocery store supports delivery, fresh produce, checkout, and product questions. Please ask something related to those topics.';
+  }
 }

@@ -5,6 +5,7 @@ import '../data/products.dart';
 import '../providers/catalog_provider.dart';
 import '../services/catalog_generator.dart';
 import '../services/firestore_service.dart';
+import '../services/ai_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
@@ -288,6 +289,250 @@ class _FaqItem {
   final String answer;
 
   const _FaqItem({required this.question, required this.answer});
+}
+
+class _AiChatSheet extends StatefulWidget {
+  const _AiChatSheet({super.key});
+
+  @override
+  State<_AiChatSheet> createState() => _AiChatSheetState();
+}
+
+class _AiChatSheetState extends State<_AiChatSheet> {
+  final _questionController = TextEditingController();
+  final _aiService = AIService();
+  bool _isLoading = false;
+  final _messages = <_ChatEntry>[];
+  final _faqs = const <_FaqItem>[
+    _FaqItem(
+      question: 'How much time does delivery take?',
+      answer:
+          'Most orders are delivered within 6 to 8 hours, depending on your area and the items in your cart.',
+    ),
+    _FaqItem(
+      question: 'How are fruits and vegetables kept fresh?',
+      answer:
+          'Fresh produce is stored in temperature-controlled conditions and packed carefully to preserve freshness during delivery.',
+    ),
+    _FaqItem(
+      question: 'How is chicken kept fresh?',
+      answer:
+          'Chicken is kept chilled in sealed packaging and delivered as quickly as possible to maintain food safety and quality.',
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendQuery() async {
+    final query = _questionController.text.trim();
+    if (query.isEmpty) return;
+
+    setState(() {
+      _messages.add(_ChatEntry(isUser: true, text: query));
+      _isLoading = true;
+      _questionController.clear();
+    });
+
+    final response = await _aiService.answerQuery(query);
+
+    if (!mounted) return;
+    setState(() {
+      _messages.add(_ChatEntry(isUser: false, text: response));
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          width: 320,
+          color: Daana.bg,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: Daana.moss,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.smart_toy_outlined, color: Daana.bg),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI Chatbot',
+                              style: Daana.serif(size: 20, height: 1.0),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Ask only e-grocery store questions',
+                              style: Daana.sans(size: 13, color: Daana.ink50),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: Daana.hairlineSoft, height: 1),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ListView(
+                      padding: const EdgeInsets.only(top: 16, bottom: 12),
+                      children: [
+                        ..._faqs.map((faq) => _FaqTile(faq)),
+                        if (_messages.isNotEmpty) const SizedBox(height: 16),
+                        ..._messages.map((message) => _ChatBubble(message: message)),
+                        if (_isLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Center(
+                              child: CircularProgressIndicator(color: Daana.moss),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Divider(color: Daana.hairlineSoft, height: 1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Daana.card,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Daana.hairlineSoft),
+                          ),
+                          child: TextField(
+                            controller: _questionController,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _sendQuery(),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              hintText: 'Ask about delivery, products, or orders',
+                              hintStyle: Daana.sans(size: 13, color: Daana.ink50),
+                            ),
+                            style: Daana.sans(size: 13),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: _isLoading ? null : _sendQuery,
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: _isLoading ? Daana.ink15 : Daana.moss,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.send,
+                            color: _isLoading ? Daana.ink50 : Daana.bg,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatEntry {
+  final bool isUser;
+  final String text;
+
+  const _ChatEntry({required this.isUser, required this.text});
+}
+
+class _FaqTile extends StatelessWidget {
+  final _FaqItem faq;
+  const _FaqTile(this.faq);
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        backgroundColor: Daana.card,
+        collapsedBackgroundColor: Daana.card,
+        title: Text(faq.question, style: Daana.sans(size: 14)),
+        iconColor: Daana.moss,
+        collapsedIconColor: Daana.ink50,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              faq.answer,
+              style: Daana.sans(size: 13, color: Daana.ink70, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatBubble extends StatelessWidget {
+  final _ChatEntry message;
+  const _ChatBubble({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = message.isUser ? Daana.moss : Daana.card;
+    final textColor = message.isUser ? Daana.bg : Daana.ink;
+    return Align(
+      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        constraints: const BoxConstraints(maxWidth: 260),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          message.text,
+          style: Daana.sans(size: 13, color: textColor, height: 1.5),
+        ),
+      ),
+    );
+  }
 }
 
 class _AddressBar extends StatefulWidget {
