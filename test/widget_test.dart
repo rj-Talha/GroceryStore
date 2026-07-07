@@ -3,6 +3,7 @@ import 'package:daana/providers/cart_provider.dart';
 import 'package:daana/providers/catalog_provider.dart';
 import 'package:daana/screens/checkout_screen.dart';
 import 'package:daana/screens/home_screen.dart';
+import 'package:daana/services/ai_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -56,6 +57,17 @@ void main() {
     await tester.tap(find.text('AI Chatbot'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Frequently asked questions'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
+  test('AI service blocks unrelated questions', () async {
+    final aiService = AIService();
+
+    final response = await aiService.answerQuery('What is the weather today?');
+
+    expect(
+      response,
+      'I can not answer questions that are not related to this Store.',
+    );
   });
 }

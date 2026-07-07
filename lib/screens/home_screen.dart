@@ -67,36 +67,13 @@ class HomeScreen extends StatelessWidget {
         Positioned(
           right: 20,
           bottom: 92,
-          child: _AiChatFab(onPressed: () => _openFaqSheet(context)),
+          child: _AiChatFab(onPressed: () => _openChatSheet(context)),
         ),
       ],
     );
   }
 
-  void _openFaqSheet(BuildContext context) {
-    final faqs = <_FaqItem>[
-      _FaqItem(
-        question: 'How much time does delivery take?',
-        answer:
-            'Most orders are delivered within 6 to 8 hours, depending on your area and the items in your cart.',
-      ),
-      _FaqItem(
-        question: 'How are fruits and vegetables kept fresh?',
-        answer:
-            'Fresh produce is stored in temperature-controlled conditions and packed carefully to preserve freshness during delivery.',
-      ),
-      _FaqItem(
-        question: 'How is chicken kept fresh?',
-        answer:
-            'Chicken is kept chilled in sealed packaging and delivered as quickly as possible to maintain food safety and quality.',
-      ),
-      _FaqItem(
-        question: 'Can I change my delivery time?',
-        answer:
-            'Yes, you can contact support to request a different delivery slot whenever available.',
-      ),
-    ];
-
+  void _openChatSheet(BuildContext context) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
@@ -119,108 +96,7 @@ class HomeScreen extends StatelessWidget {
                       end: Offset.zero,
                     ).chain(CurveTween(curve: Curves.easeOutCubic)),
                   ),
-                  child: Material(
-                    color: Daana.bg,
-                    child: SafeArea(
-                      child: Container(
-                        width: 320,
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: const BoxDecoration(
-                                    color: Daana.moss,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.smart_toy_outlined,
-                                      color: Daana.bg,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'AI Chatbot',
-                                        style: Daana.serif(size: 20, height: 1.0),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Frequently asked questions',
-                                        style: Daana.sans(
-                                          size: 13,
-                                          color: Daana.ink50,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: ListView.separated(
-                                itemCount: faqs.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                                itemBuilder: (_, index) {
-                                  final item = faqs[index];
-                                  return Theme(
-                                    data: Theme.of(routeContext).copyWith(
-                                      dividerColor: Colors.transparent,
-                                    ),
-                                    child: ExpansionTile(
-                                      tilePadding: EdgeInsets.zero,
-                                      childrenPadding: const EdgeInsets.only(
-                                        left: 4,
-                                        top: 4,
-                                        bottom: 4,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      collapsedShape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      backgroundColor: Daana.card,
-                                      collapsedBackgroundColor: Daana.card,
-                                      title: Text(
-                                        item.question,
-                                        style: Daana.sans(size: 14),
-                                      ),
-                                      iconColor: Daana.moss,
-                                      collapsedIconColor: Daana.ink50,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                                          child: Text(
-                                            item.answer,
-                                            style: Daana.sans(
-                                              size: 13,
-                                              color: Daana.ink70,
-                                              height: 1.5,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: const _AiChatSheet(),
                 ),
               ),
             ],
@@ -273,9 +149,17 @@ class _AiChatFabState extends State<_AiChatFab> {
               child: _hovered
                   ? Text(
                       'AI Chatbot',
-                      style: Daana.sans(size: 14, color: Daana.bg, weight: FontWeight.w600),
+                      style: Daana.sans(
+                        size: 14,
+                        color: Daana.bg,
+                        weight: FontWeight.w600,
+                      ),
                     )
-                  : const Icon(Icons.smart_toy_outlined, color: Daana.bg, size: 22),
+                  : const Icon(
+                      Icons.smart_toy_outlined,
+                      color: Daana.bg,
+                      size: 22,
+                    ),
             ),
           ),
         ),
@@ -370,7 +254,10 @@ class _AiChatSheetState extends State<_AiChatSheet> {
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
-                          child: Icon(Icons.smart_toy_outlined, color: Daana.bg),
+                          child: Icon(
+                            Icons.smart_toy_outlined,
+                            color: Daana.bg,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -402,12 +289,16 @@ class _AiChatSheetState extends State<_AiChatSheet> {
                       children: [
                         ..._faqs.map((faq) => _FaqTile(faq)),
                         if (_messages.isNotEmpty) const SizedBox(height: 16),
-                        ..._messages.map((message) => _ChatBubble(message: message)),
+                        ..._messages.map(
+                          (message) => _ChatBubble(message: message),
+                        ),
                         if (_isLoading)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 12),
                             child: Center(
-                              child: CircularProgressIndicator(color: Daana.moss),
+                              child: CircularProgressIndicator(
+                                color: Daana.moss,
+                              ),
                             ),
                           ),
                       ],
@@ -433,8 +324,12 @@ class _AiChatSheetState extends State<_AiChatSheet> {
                             onSubmitted: (_) => _sendQuery(),
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: 'Ask about delivery, products, or orders',
-                              hintStyle: Daana.sans(size: 13, color: Daana.ink50),
+                              hintText:
+                                  'Ask about this store, delivery, products, or orders',
+                              hintStyle: Daana.sans(
+                                size: 13,
+                                color: Daana.ink50,
+                              ),
                             ),
                             style: Daana.sans(size: 13),
                           ),
@@ -488,7 +383,9 @@ class _FaqTile extends StatelessWidget {
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(left: 4, top: 4, bottom: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         backgroundColor: Daana.card,
         collapsedBackgroundColor: Daana.card,
         title: Text(faq.question, style: Daana.sans(size: 14)),

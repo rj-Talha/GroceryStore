@@ -125,14 +125,18 @@ Output raw JSON array only, no markdown blocks.
   }
 
   /// Parses a dish string into a list of required Products and quantities
-  Future<List<(Product, String)>> getIngredientsForDish(String dish, List<Product> availableProducts) async {
+  Future<List<(Product, String)>> getIngredientsForDish(
+    String dish,
+    List<Product> availableProducts,
+  ) async {
     if (!isConfigured) {
       await Future.delayed(const Duration(milliseconds: 1500));
       return availableProducts.take(6).map((p) => (p, '1 item')).toList();
     }
 
     final availableKeys = availableProducts.map((p) => p.key).join(', ');
-    final prompt = '''
+    final prompt =
+        '''
 I want to cook "$dish".
 Map the required ingredients to the following available product keys: $availableKeys.
 Format the response strictly as a JSON array of objects with keys:
@@ -145,14 +149,19 @@ Output raw JSON array only, no markdown blocks.
     try {
       final response = await _model.generateContent([Content.text(prompt)]);
       final text = response.text?.trim() ?? '[]';
-      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      final cleanText = text
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       final List<dynamic> jsonList = jsonDecode(cleanText);
-      
+
       final results = <(Product, String)>[];
       for (var item in jsonList) {
         final key = item['key'] as String;
         final qty = item['qty'] as String;
-        final matchingProduct = availableProducts.where((p) => p.key == key).firstOrNull;
+        final matchingProduct = availableProducts
+            .where((p) => p.key == key)
+            .firstOrNull;
         if (matchingProduct != null) {
           results.add((matchingProduct, qty));
         }
@@ -165,14 +174,18 @@ Output raw JSON array only, no markdown blocks.
   }
 
   /// Parses transcribed voice text into cart items.
-  Future<List<(Product, String)>> parseVoiceOrder(String transcription, List<Product> availableProducts) async {
+  Future<List<(Product, String)>> parseVoiceOrder(
+    String transcription,
+    List<Product> availableProducts,
+  ) async {
     if (!isConfigured || transcription.isEmpty) {
       await Future.delayed(const Duration(milliseconds: 1000));
       return availableProducts.take(3).map((p) => (p, '1 item')).toList();
     }
 
     final availableKeys = availableProducts.map((p) => p.key).join(', ');
-    final prompt = '''
+    final prompt =
+        '''
 A user said: "$transcription" (It could be in English or Urdu).
 Extract the grocery items they want to buy.
 Map the required ingredients to the following available product keys: $availableKeys.
@@ -186,14 +199,19 @@ Output raw JSON array only, no markdown blocks.
     try {
       final response = await _model.generateContent([Content.text(prompt)]);
       final text = response.text?.trim() ?? '[]';
-      final cleanText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+      final cleanText = text
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
       final List<dynamic> jsonList = jsonDecode(cleanText);
-      
+
       final results = <(Product, String)>[];
       for (var item in jsonList) {
         final key = item['key'] as String;
         final qty = item['qty'] as String;
-        final matchingProduct = availableProducts.where((p) => p.key == key).firstOrNull;
+        final matchingProduct = availableProducts
+            .where((p) => p.key == key)
+            .firstOrNull;
         if (matchingProduct != null) {
           results.add((matchingProduct, qty));
         }
@@ -216,21 +234,26 @@ Output raw JSON array only, no markdown blocks.
       return _mockQueryResponse(trimmedQuery);
     }
 
-    final prompt = '''
+    final prompt =
+        '''
 You are an AI assistant for an e-grocery store app. Only answer questions related to this grocery store, its products, orders, delivery, freshness, checkout, payment, and customer service.
 If the user's question is unrelated to e-grocery or this store, reply exactly:
-I'm sorry, I can only answer questions about this e-grocery store.
+I can not answer questions that are not related to this Store.
 
 Question: "$trimmedQuery"
 ''';
 
     try {
       final response = await _model.generateContent([Content.text(prompt)]);
-      return response.text?.trim() ??
-          'I\'m sorry, I can only answer questions about this e-grocery store.';
+      final answer =
+          response.text?.trim() ??
+          'I can not answer questions that are not related to this Store.';
+      return answer.isEmpty
+          ? 'I can not answer questions that are not related to this Store.'
+          : answer;
     } catch (e) {
       print('AI Service Chat Error: $e');
-      return 'I\'m sorry, I can only answer questions about this e-grocery store.';
+      return 'I can not answer questions that are not related to this Store.';
     }
   }
 
@@ -258,13 +281,15 @@ Question: "$trimmedQuery"
     ];
 
     if (!groceryKeywords.any(lower.contains)) {
-      return 'I\'m sorry, I can only answer questions about this e-grocery store.';
+      return 'I can not answer questions that are not related to this Store.';
     }
 
     if (lower.contains('delivery')) {
       return 'Most orders are delivered within 6 to 8 hours, depending on your area and items in your cart.';
     }
-    if (lower.contains('fresh') || lower.contains('fruits') || lower.contains('vegetable')) {
+    if (lower.contains('fresh') ||
+        lower.contains('fruits') ||
+        lower.contains('vegetable')) {
       return 'Fresh produce is kept in temperature-controlled storage and packed carefully to preserve freshness during delivery.';
     }
     if (lower.contains('chicken')) {
