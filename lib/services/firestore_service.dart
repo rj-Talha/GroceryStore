@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../data/products.dart';
+import 'catalog_generator.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -27,7 +28,38 @@ class FirestoreService {
     String productId,
     Map<String, dynamic> data,
   ) async {
-    await _firestore.collection('products').doc(productId).update(data);
+    await _firestore.collection('products').doc(productId).set(
+      data,
+      SetOptions(merge: true),
+    );
+  }
+
+  Future<Product?> getProduct(String productId) async {
+    try {
+      final doc = await _firestore.collection('products').doc(productId).get();
+      if (!doc.exists) return null;
+      return Product.fromJson(doc.id, doc.data()!);
+    } catch (e) {
+      print('Firestore error loading single product: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateProducts(List<Product> products) async {
+    const batchSize = 500;
+
+    for (int i = 0; i < products.length; i += batchSize) {
+      final batchProducts = products.skip(i).take(batchSize).toList();
+      final batch = _firestore.batch();
+
+      for (final product in batchProducts) {
+        final payload = CatalogGenerator.buildProductDetailPayload(product);
+        final docRef = _firestore.collection('products').doc(product.key);
+        batch.set(docRef, payload, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+    }
   }
 
   Future<List<StoreOrder>> getOrders() async {

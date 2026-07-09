@@ -441,6 +441,7 @@ class _AddressBar extends StatefulWidget {
 
 class _AddressBarState extends State<_AddressBar> {
   bool _isUploading = false;
+  bool _isUpdatingInfo = false;
 
   Future<void> _uploadCatalog() async {
     setState(() => _isUploading = true);
@@ -474,6 +475,41 @@ class _AddressBarState extends State<_AddressBar> {
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _updateProductInfo() async {
+    final provider = context.read<CatalogProvider>();
+    final products = provider.allProducts;
+
+    if (products.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No products available to update yet.')),
+      );
+      return;
+    }
+
+    setState(() => _isUpdatingInfo = true);
+
+    try {
+      final firestoreService = FirestoreService();
+      await firestoreService.updateProducts(products);
+      await provider.refreshProducts();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product info updated successfully.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update product info: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdatingInfo = false);
     }
   }
 
@@ -519,6 +555,35 @@ class _AddressBarState extends State<_AddressBar> {
               icon: const DaanaIcon('sparkle', size: 20, color: Daana.moss),
               tooltip: 'Generate Massive Catalog',
               onPressed: _uploadCatalog,
+            ),
+          const SizedBox(width: 8),
+          if (_isUpdatingInfo)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Daana.moss,
+                ),
+              ),
+            )
+          else
+            TextButton.icon(
+              onPressed: _updateProductInfo,
+              icon: const Icon(Icons.auto_fix_high_outlined, size: 18, color: Daana.moss),
+              label: const Text(
+                'Update Product Info',
+                style: TextStyle(color: Daana.moss, fontSize: 12),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  side: BorderSide(color: Daana.hairlineSoft),
+                ),
+              ),
             ),
           const SizedBox(width: 8),
           Container(

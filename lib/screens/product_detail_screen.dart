@@ -1,5 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../data/products.dart';
+import '../providers/catalog_provider.dart';
+import '../services/catalog_generator.dart';
+import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
@@ -20,18 +24,72 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int qty = 1;
-  String variant = '1kg';
+  Product? _resolvedProduct;
+  List<Product> _recommendations = [];
+  bool _hasInitialized = false;
+  bool _isLoadingProduct = false;
 
-  static const _variants = [
-    ('500g', '500 g', 170, null),
-    ('1kg', '1 kg', 320, 'Most picked'),
-    ('5kg', '5 kg box', 1480, 'Save Rs 120'),
-  ];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasInitialized) {
+      _hasInitialized = true;
+      _setupRecommendations();
+      _loadFirebaseProductIfNeeded();
+    }
+  }
+
+  void _setupRecommendations() {
+    final catalog = context.read<CatalogProvider>();
+    final candidates = catalog.allProducts.where((p) => p.key != widget.product.key).toList();
+    if (candidates.isEmpty) {
+      _recommendations = [];
+      return;
+    }
+    candidates.shuffle(Random(widget.product.key.hashCode ^ DateTime.now().millisecondsSinceEpoch));
+    _recommendations = candidates.take(candidates.length > 4 ? 4 : candidates.length).toList();
+  }
+
+  bool _needsFirebaseRefresh(Product product) {
+    return product.urduName == null ||
+        product.description == null ||
+        product.quantity == null ||
+        product.whatYouCanMake == null ||
+        product.thumbnailImageUrls == null ||
+        product.thumbnailImageUrls!.isEmpty;
+  }
+
+  Future<void> _loadFirebaseProductIfNeeded() async {
+    final initialProduct = widget.product;
+    if (!_needsFirebaseRefresh(initialProduct)) return;
+
+    setState(() {
+      _isLoadingProduct = true;
+    });
+
+    try {
+      final firebaseProduct = await FirestoreService().getProduct(initialProduct.key);
+      if (firebaseProduct != null && mounted) {
+        setState(() {
+          _resolvedProduct = firebaseProduct;
+        });
+      }
+    } catch (e) {
+      // Ignore fetch failures; fallback content will still display.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingProduct = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.product;
+    final p = _resolvedProduct ?? widget.product;
     final cart = context.watch<CartProvider>();
+    final detail = _detailContent(p);
 
     return Scaffold(
       backgroundColor: Daana.bg,
@@ -67,19 +125,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     label: '${p.name.toLowerCase()} — hero',
                     tone: p.tone,
                     radius: 20,
-                    imageUrl: p.imageUrl,
-                  ),                ),
+                    imageUrl: detail['imageUrl'] as String?,
+                  ),
+                ),
               ),
             ),
             SliverToBoxAdapter(child: const SizedBox(height: 12)),
-            SliverToBoxAdapter(child: _Thumbnails(tone: p.tone)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _Thumbnails(
+                  tone: p.tone,
+                  imageUrls: List<String>.from(detail['thumbnailImageUrls'] as List<dynamic>),
+                ),
+              ),
+            ),
             SliverToBoxAdapter(child: const SizedBox(height: 20)),
-            SliverToBoxAdapter(child: _Header(product: p)),
-            SliverToBoxAdapter(child: _VariantPicker(
-              variant: variant,
-              variants: _variants,
-              onChange: (v) => setState(() => variant = v),
-            )),
+            SliverToBoxAdapter(child: _Header(product: p, detail: detail)),
+            SliverToBoxAdapter(child: _RecommendedItems(recommendations: _recommendations)),
             SliverToBoxAdapter(child: _CTA(
               qty: qty,
               price: p.price,
@@ -97,7 +160,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               },
             )),
             SliverToBoxAdapter(child: const _MetaStrip()),
-            SliverToBoxAdapter(child: const _RecipeIdeas()),
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
         ),
@@ -125,18 +187,22 @@ class _CircleBtn extends StatelessWidget {
 
 class _Thumbnails extends StatelessWidget {
   final String tone;
-  const _Thumbnails({required this.tone});
+  final List<String> imageUrls;
+  const _Thumbnails({required this.tone, required this.imageUrls});
 
   @override
   Widget build(BuildContext context) {
-    const labels = ['detail', 'flesh', 'in crate', 'scale'];
+    final images = imageUrls.isEmpty ? const <String>[] : imageUrls;
+    final count = images.length.clamp(1, 4);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        children: List.generate(labels.length, (i) {
+        children: List.generate(count, (i) {
+          final imageUrl = images[i];
           return Expanded(
             child: Padding(
-              padding: EdgeInsets.only(right: i < labels.length - 1 ? 10 : 0),
+              padding: EdgeInsets.only(right: i < count - 1 ? 10 : 0),
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
@@ -147,7 +213,12 @@ class _Thumbnails extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: ProductPlaceholder(label: labels[i], tone: tone, radius: 10),
+                  child: ProductPlaceholder(
+                    label: 'detail ${i + 1}',
+                    tone: tone,
+                    radius: 10,
+                    imageUrl: imageUrl,
+                  ),
                 ),
               ),
             ),
@@ -160,7 +231,8 @@ class _Thumbnails extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   final Product product;
-  const _Header({required this.product});
+  final Map<String, dynamic> detail;
+  const _Header({required this.product, required this.detail});
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +258,10 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 4),
           Directionality(
             textDirection: TextDirection.rtl,
-            child: Text('سندھڑی آم', style: Daana.urdu(size: 22, color: Daana.ink70)),
+            child: Text(
+              detail['urduName'] as String,
+              style: Daana.urdu(size: 22, color: Daana.ink70),
+            ),
           ),
           const SizedBox(height: 14),
           Row(
@@ -197,7 +272,7 @@ class _Header extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'per kg · ~6 fruits',
+                  detail['quantity'] as String,
                   style: Daana.sans(size: 12, color: Daana.ink50),
                 ),
               ),
@@ -205,10 +280,31 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Picked yesterday at first light from a 40-year-old orchard outside '
-            'Mirpurkhas. Fibrous, honey-sweet, with a clean finish. Best eaten within '
-            'four days of arrival.',
+            detail['description'] as String,
             style: Daana.sans(size: 14, color: Daana.ink70, height: 1.55),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Daana.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Daana.hairlineSoft),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'What you can make',
+                  style: Daana.sans(size: 13, weight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  detail['whatYouCanMake'] as String,
+                  style: Daana.sans(size: 14, color: Daana.ink70, height: 1.55),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -216,66 +312,19 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _VariantPicker extends StatelessWidget {
-  final String variant;
-  final List<(String, String, int, String?)> variants;
-  final ValueChanged<String> onChange;
-  const _VariantPicker({
-    required this.variant,
-    required this.variants,
-    required this.onChange,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Eyebrow('Quantity'),
-          const SizedBox(height: 10),
-          Row(
-            children: variants.map((v) {
-              final active = variant == v.$1;
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: v == variants.last ? 0 : 8),
-                  child: GestureDetector(
-                    onTap: () => onChange(v.$1),
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                      decoration: BoxDecoration(
-                        color: active ? Daana.card : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: active ? Daana.ink : Daana.hairlineSoft,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(v.$2, style: Daana.sans(size: 13, weight: FontWeight.w500)),
-                          const SizedBox(height: 2),
-                          PriceText(value: v.$3, size: 12, color: Daana.ink70),
-                          if (v.$4 != null) ...[
-                            const SizedBox(height: 4),
-                            Text(v.$4!.toUpperCase(),
-                                style: Daana.mono(size: 9, color: Daana.moss, letterSpacing: 1.0)),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+extension on _ProductDetailScreenState {
+  Map<String, dynamic> _detailContent(Product product) {
+    final fallback = CatalogGenerator.buildProductDetailPayload(product);
+    return {
+      'imageUrl': product.imageUrl ?? fallback['imageUrl'],
+      'thumbnailImageUrls': product.thumbnailImageUrls?.isNotEmpty == true
+          ? product.thumbnailImageUrls!
+          : List<String>.from(fallback['thumbnailImageUrls']),
+      'urduName': (product.urduName ?? fallback['urduName']).toString(),
+      'description': (product.description ?? fallback['description']).toString(),
+      'quantity': (product.quantity ?? fallback['quantity']).toString(),
+      'whatYouCanMake': (product.whatYouCanMake ?? fallback['whatYouCanMake']).toString(),
+    };
   }
 }
 
@@ -381,59 +430,68 @@ class _MetaStrip extends StatelessWidget {
   }
 }
 
-class _RecipeIdeas extends StatelessWidget {
-  const _RecipeIdeas();
+class _RecommendedItems extends StatelessWidget {
+  final List<Product> recommendations;
+  const _RecommendedItems({required this.recommendations});
 
   @override
   Widget build(BuildContext context) {
-    const recipes = [
-      ('Aam ka achaar', '6 ingredients · 30 m'),
-      ('Mango lassi', '4 ingredients · 5 m'),
-      ('Mango kulfi', '5 ingredients · 4 h'),
-    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Daana.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Daana.hairlineSoft),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                DaanaIcon('sparkle', size: 14, color: Daana.moss),
-                const SizedBox(width: 8),
-                const Eyebrow('What to make with Sindhri'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...recipes.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              DaanaIcon('sparkle', size: 14, color: Daana.moss),
+              const SizedBox(width: 8),
+              const Eyebrow('Recommended for you'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Column(
+            children: recommendations.map((product) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailScreen(product: product),
+                      ),
+                    );
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Daana.bg,
-                      borderRadius: BorderRadius.circular(12),
+                      color: Daana.card,
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Daana.hairlineSoft),
                     ),
                     child: Row(
                       children: [
                         SizedBox(
-                          width: 36, height: 36,
-                          child: ProductPlaceholder(tone: 'c', radius: 6),
+                          width: 84,
+                          height: 84,
+                          child: ProductPlaceholder(
+                            label: product.label,
+                            tone: product.tone,
+                            radius: 12,
+                            imageUrl: product.imageUrl,
+                          ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(r.$1, style: Daana.sans(size: 13)),
-                              const SizedBox(height: 2),
-                              Text(r.$2, style: Daana.sans(size: 11, color: Daana.ink50)),
+                              Text(product.name, style: Daana.sans(size: 14, weight: FontWeight.w600)),
+                              const SizedBox(height: 4),
+                              Text(product.unit, style: Daana.sans(size: 12, color: Daana.ink50)),
+                              const SizedBox(height: 6),
+                              PriceText(value: product.price, size: 14),
                             ],
                           ),
                         ),
@@ -441,9 +499,11 @@ class _RecipeIdeas extends StatelessWidget {
                       ],
                     ),
                   ),
-                )),
-          ],
-        ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

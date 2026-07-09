@@ -4,6 +4,123 @@ import '../data/products.dart';
 class CatalogGenerator {
   static final _rnd = Random();
 
+  static Map<String, dynamic> buildProductDetailPayload(Product product) {
+    final normalizedLabel = product.label.toLowerCase();
+    final unit = product.unit.isNotEmpty ? product.unit : '1 pack';
+    final seed = product.key.isNotEmpty ? product.key : product.name.toLowerCase();
+    final mainImageUrl = 'https://picsum.photos/seed/${seed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')}/900/900';
+    final thumbnailImageUrls = [
+      'https://picsum.photos/seed/${seed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')}-1/300/300',
+      'https://picsum.photos/seed/${seed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')}-2/300/300',
+      'https://picsum.photos/seed/${seed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')}-3/300/300',
+      'https://picsum.photos/seed/${seed.replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '-')}-4/300/300',
+    ];
+
+    final urduName = _urduNameFor(product.name, normalizedLabel);
+    final description = _descriptionFor(product.name, normalizedLabel, unit);
+    final quantity = _quantityFor(unit);
+    final whatYouCanMake = _makeSuggestionsFor(normalizedLabel, product.name);
+
+    return {
+      'imageUrl': product.imageUrl ?? mainImageUrl,
+      'thumbnailImageUrls': thumbnailImageUrls,
+      'name': product.name,
+      'urduName': urduName,
+      'price': product.price,
+      'description': description,
+      'quantity': quantity,
+      'whatYouCanMake': whatYouCanMake,
+    };
+  }
+
+  static String _urduNameFor(String productName, String label) {
+    final lowered = productName.toLowerCase();
+    if (label.contains('mango') || lowered.contains('mango')) {
+      return 'سندھری آم';
+    }
+    if (label.contains('banana') || lowered.contains('banana')) {
+      return 'کیلے';
+    }
+    if (label.contains('tomato') || lowered.contains('tomato')) {
+      return 'ٹماٹر';
+    }
+    if (label.contains('onion') || lowered.contains('onion')) {
+      return 'پیاز';
+    }
+    if (label.contains('potato') || lowered.contains('potato')) {
+      return 'آلو';
+    }
+    if (label.contains('spinach') || lowered.contains('spinach')) {
+      return 'پالک';
+    }
+    if (label.contains('coriander') || lowered.contains('coriander')) {
+      return 'دھنیا';
+    }
+    if (label.contains('garlic') || lowered.contains('garlic')) {
+      return 'لہسن';
+    }
+    if (label.contains('ginger') || lowered.contains('ginger')) {
+      return 'ادرک';
+    }
+    if (label.contains('chicken') || lowered.contains('chicken')) {
+      return 'مرغ';
+    }
+    if (label.contains('beef') || lowered.contains('beef')) {
+      return 'گائے کا گوشت';
+    }
+    if (label.contains('mutton') || lowered.contains('mutton')) {
+      return 'بکری کا گوشت';
+    }
+    return productName;
+  }
+
+  static String _descriptionFor(String productName, String label, String unit) {
+    final lowerName = productName.toLowerCase();
+    if (label.contains('mango') || lowerName.contains('mango')) {
+      return '$productName is hand-picked for sweetness and aroma. It is ideal for fresh eating, smoothies, and seasonal desserts.';
+    }
+    if (label.contains('banana') || lowerName.contains('banana')) {
+      return '$productName is ripe, soft, and ready for breakfast bowls, smoothies, or quick snacking.';
+    }
+    if (label.contains('tomato') || lowerName.contains('tomato')) {
+      return '$productName is juicy and rich in flavor, making it perfect for curries, salads, and homemade sauces.';
+    }
+    if (label.contains('chicken') || lowerName.contains('chicken')) {
+      return '$productName is fresh, tender, and packed for quick curries, grilling, or stir-fry meals.';
+    }
+    if (label.contains('beef') || lowerName.contains('beef')) {
+      return '$productName is finely prepared for kebabs, qeema, and hearty family dishes.';
+    }
+    if (label.contains('milk') || lowerName.contains('milk')) {
+      return '$productName is fresh and wholesome, great for chai, tea, baking, and breakfast.';
+    }
+    return '$productName is carefully selected and packed for daily kitchen use. Each pack is prepared for freshness and convenience in a $unit portion.';
+  }
+
+  static String _quantityFor(String unit) {
+    return unit.isNotEmpty ? 'Quantity: $unit' : 'Quantity: 1 pack';
+  }
+
+  static String _makeSuggestionsFor(String label, String productName) {
+    final lowerName = productName.toLowerCase();
+    if (label.contains('mango') || lowerName.contains('mango')) {
+      return 'Make a mango lassi, mango chutney, or a chilled smoothie with this fruit.';
+    }
+    if (label.contains('banana') || lowerName.contains('banana')) {
+      return 'Use it for banana bread, smoothies, or a quick breakfast bowl.';
+    }
+    if (label.contains('tomato') || lowerName.contains('tomato')) {
+      return 'Cook a rich tomato curry, make fresh salad, or blend it into a sauce.';
+    }
+    if (label.contains('chicken') || lowerName.contains('chicken')) {
+      return 'Prepare a spicy curry, grill it with masala, or stir-fry it with vegetables.';
+    }
+    if (label.contains('beef') || lowerName.contains('beef')) {
+      return 'Use it for qeema, kebabs, or a slow-cooked beef curry.';
+    }
+    return 'Use $productName in a quick family meal, a fresh salad, or a comforting homemade dish.';
+  }
+
   static List<Product> generate(int count) {
     final products = <Product>[];
     final generatedKeys = <String>{};

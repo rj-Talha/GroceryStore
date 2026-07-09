@@ -123,6 +123,11 @@ class Product {
   final int salesCount;
   final int trendingScore;
   final String? imageUrl;
+  final String? urduName;
+  final String? description;
+  final String? quantity;
+  final String? whatYouCanMake;
+  final List<String>? thumbnailImageUrls;
 
   const Product({
     required this.key,
@@ -136,6 +141,11 @@ class Product {
     this.salesCount = 0,
     this.trendingScore = 0,
     this.imageUrl,
+    this.urduName,
+    this.description,
+    this.quantity,
+    this.whatYouCanMake,
+    this.thumbnailImageUrls,
   });
 
   factory Product.fromJson(String key, Map<String, dynamic> json) {
@@ -150,7 +160,14 @@ class Product {
       tone: json['tone'] as String? ?? 'd',
       salesCount: json['salesCount'] as int? ?? 0,
       trendingScore: json['trendingScore'] as int? ?? 0,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: (json['imageUrl'] ?? json['mainImageUrl']) as String?,
+      urduName: json['urduName'] as String?,
+      description: json['description'] as String?,
+      quantity: json['quantity'] as String?,
+      whatYouCanMake: json['whatYouCanMake'] as String?,
+      thumbnailImageUrls: (json['thumbnailImageUrls'] as List<dynamic>?)
+          ?.map((item) => item.toString())
+          .toList(),
     );
   }
 
@@ -166,6 +183,11 @@ class Product {
       'salesCount': salesCount,
       'trendingScore': trendingScore,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      if (urduName != null) 'urduName': urduName,
+      if (description != null) 'description': description,
+      if (quantity != null) 'quantity': quantity,
+      if (whatYouCanMake != null) 'whatYouCanMake': whatYouCanMake,
+      if (thumbnailImageUrls != null) 'thumbnailImageUrls': thumbnailImageUrls,
     };
   }
 }

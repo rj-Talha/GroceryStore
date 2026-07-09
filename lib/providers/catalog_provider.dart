@@ -22,12 +22,18 @@ class CatalogProvider extends ChangeNotifier {
   }
 
   Future<void> _init() async {
+    await refreshProducts();
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshProducts() async {
     try {
       _allProducts = await _firestoreService.getProducts();
+      _error = null;
     } catch (e) {
       _error = e.toString();
     } finally {
-      _isLoading = false;
       notifyListeners();
     }
   }

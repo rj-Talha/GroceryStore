@@ -235,7 +235,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Daana.ink),
+              borderSide: BorderSide(color: Daana.ink),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
