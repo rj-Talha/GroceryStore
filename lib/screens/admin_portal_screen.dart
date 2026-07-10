@@ -143,7 +143,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           final haystack = [
             product.name,
             product.label,
-            product.unit,
+            product.urduName ?? '',
             product.key,
           ].join(' ').toLowerCase();
           return haystack.contains(query);
@@ -204,6 +204,149 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
         _statusColor = Colors.red.shade700;
       });
     }
+  }
+
+  Future<void> _showAddProductDialog() async {
+    final nameController = TextEditingController();
+    final urduController = TextEditingController();
+    final labelController = TextEditingController();
+    final priceController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final whatController = TextEditingController();
+    final imageController = TextEditingController();
+    final thumbs = List.generate(4, (_) => TextEditingController());
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add new product'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  controller: urduController,
+                  decoration: const InputDecoration(labelText: 'Urdu name'),
+                ),
+                TextField(
+                  controller: labelController,
+                  decoration: const InputDecoration(labelText: 'Label'),
+                ),
+                TextField(
+                  controller: priceController,
+                  decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: imageController,
+                  decoration: const InputDecoration(labelText: 'Main image URL'),
+                ),
+                const SizedBox(height: 8),
+                ...List.generate(4, (i) {
+                  return TextField(
+                    controller: thumbs[i],
+                    decoration: InputDecoration(labelText: 'Thumbnail ${i + 1}'),
+                  );
+                }),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                TextField(
+                  controller: whatController,
+                  decoration: const InputDecoration(labelText: 'What you can make'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                for (final c in [
+                  nameController,
+                  urduController,
+                  labelController,
+                  priceController,
+                  descriptionController,
+                  whatController,
+                  imageController,
+                  ...thumbs
+                ]) {
+                  c.dispose();
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = nameController.text.trim();
+                final label = labelController.text.trim();
+                final price = int.tryParse(priceController.text.trim()) ?? 0;
+                if (name.isEmpty || label.isEmpty || price <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please provide name, label and valid price')),
+                  );
+                  return;
+                }
+
+                final payload = <String, dynamic>{
+                  'name': name,
+                  'label': label,
+                  'price': price,
+                  'urduName': urduController.text.trim(),
+                  'description': descriptionController.text.trim(),
+                  'whatYouCanMake': whatController.text.trim(),
+                  'imageUrl': imageController.text.trim().isEmpty ? null : imageController.text.trim(),
+                  'tone': 'd',
+                  'salesCount': 0,
+                  'trendingScore': 0,
+                };
+
+                final thumbsList = thumbs.map((c) => c.text.trim()).where((t) => t.isNotEmpty).toList();
+                if (thumbsList.isNotEmpty) payload['thumbnailImageUrls'] = thumbsList;
+
+                try {
+                  await _firestoreService.createProduct(payload);
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
+                  setState(() {
+                    _statusMessage = 'Product "$name" added.';
+                    _statusColor = Daana.moss;
+                  });
+                  await _loadProducts();
+                } catch (e) {
+                  if (!mounted) return;
+                  setState(() {
+                    _statusMessage = 'Failed to add product.';
+                    _statusColor = Colors.red.shade700;
+                  });
+                } finally {
+                  for (final c in [
+                    nameController,
+                    urduController,
+                    labelController,
+                    priceController,
+                    descriptionController,
+                    whatController,
+                    imageController,
+                    ...thumbs
+                  ]) {
+                    c.dispose();
+                  }
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _showOrderDetails(StoreOrder order) {
@@ -368,6 +511,18 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                     ),
                     child: const Text('Order list'),
                   ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.tonal(
+                  onPressed: _showAddProductDialog,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Daana.ink,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text('Add New Product'),
                 ),
               ],
             ),
@@ -611,22 +766,17 @@ class _ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              product.name,
-              style: Daana.serif(size: 18, weight: FontWeight.w700),
-            ),
+            Text(product.name, style: Daana.serif(size: 18, weight: FontWeight.w700)),
             const SizedBox(height: 4),
-            Text(
-              '${product.key} • ${product.unit}',
-              style: Daana.sans(size: 13, color: Daana.ink70),
-            ),
+            if ((product.urduName ?? '').isNotEmpty)
+              Text(product.urduName!, style: Daana.sans(size: 13, color: Daana.ink70)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
                 SizedBox(
-                  width: 180,
+                  width: 220,
                   child: _buildField(
                     'Name',
                     fields?.nameController,
@@ -636,9 +786,9 @@ class _ProductCard extends StatelessWidget {
                 SizedBox(
                   width: 180,
                   child: _buildField(
-                    'Unit',
-                    fields?.unitController,
-                    (value) => onChanged('unit', value),
+                    'Urdu name',
+                    fields?.urduNameController,
+                    (value) => onChanged('urduName', value),
                   ),
                 ),
                 SizedBox(
@@ -653,63 +803,47 @@ class _ProductCard extends StatelessWidget {
                 SizedBox(
                   width: 150,
                   child: _buildField(
-                    'Old Price',
-                    fields?.oldController,
-                    (value) => onChanged('old', value),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                SizedBox(
-                  width: 150,
-                  child: _buildField(
-                    'Deal %',
-                    fields?.dealController,
-                    (value) => onChanged('deal', value),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                SizedBox(
-                  width: 150,
-                  child: _buildField(
                     'Label',
                     fields?.labelController,
                     (value) => onChanged('label', value),
                   ),
                 ),
                 SizedBox(
-                  width: 150,
+                  width: 360,
                   child: _buildField(
-                    'Tone',
-                    fields?.toneController,
-                    (value) => onChanged('tone', value),
+                    'Description',
+                    fields?.descriptionController,
+                    (value) => onChanged('description', value),
                   ),
                 ),
                 SizedBox(
-                  width: 220,
+                  width: 360,
                   child: _buildField(
-                    'Image URL',
+                    'What you can make',
+                    fields?.whatYouCanMakeController,
+                    (value) => onChanged('whatYouCanMake', value),
+                  ),
+                ),
+                SizedBox(
+                  width: 320,
+                  child: _buildField(
+                    'Main image URL',
                     fields?.imageUrlController,
                     (value) => onChanged('imageUrl', value),
                   ),
                 ),
-                SizedBox(
-                  width: 150,
-                  child: _buildField(
-                    'Sales Count',
-                    fields?.salesCountController,
-                    (value) => onChanged('salesCount', value),
-                    keyboardType: TextInputType.number,
+                // Thumbnail links (up to 4)
+                for (var i = 0; i < 4; i++)
+                  SizedBox(
+                    width: 320,
+                    child: _buildField(
+                      'Thumbnail link ${i + 1}',
+                      (fields?.thumbnailControllers.length ?? 0) > i
+                          ? fields?.thumbnailControllers[i]
+                          : null,
+                      (value) => onChanged('thumbnail_$i', value),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  width: 170,
-                  child: _buildField(
-                    'Trending Score',
-                    fields?.trendingScoreController,
-                    (value) => onChanged('trendingScore', value),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -766,80 +900,75 @@ class _ProductCard extends StatelessWidget {
 class _ProductDraft {
   _ProductDraft({
     required this.nameController,
-    required this.unitController,
+    required this.urduNameController,
     required this.priceController,
-    required this.oldController,
-    required this.dealController,
     required this.labelController,
-    required this.toneController,
+    required this.descriptionController,
+    required this.whatYouCanMakeController,
     required this.imageUrlController,
-    required this.salesCountController,
-    required this.trendingScoreController,
+    required this.thumbnailControllers,
   });
 
   final TextEditingController nameController;
-  final TextEditingController unitController;
+  final TextEditingController urduNameController;
   final TextEditingController priceController;
-  final TextEditingController oldController;
-  final TextEditingController dealController;
   final TextEditingController labelController;
-  final TextEditingController toneController;
+  final TextEditingController descriptionController;
+  final TextEditingController whatYouCanMakeController;
   final TextEditingController imageUrlController;
-  final TextEditingController salesCountController;
-  final TextEditingController trendingScoreController;
+  final List<TextEditingController> thumbnailControllers;
 
   factory _ProductDraft.fromProduct(Product product) {
+    final thumbnails = List<TextEditingController>.generate(
+      4,
+      (i) => TextEditingController(
+        text: (product.thumbnailImageUrls ?? []).length > i
+          ? product.thumbnailImageUrls![i]
+          : ''),
+    );
+
     return _ProductDraft(
       nameController: TextEditingController(text: product.name),
-      unitController: TextEditingController(text: product.unit),
+      urduNameController: TextEditingController(text: product.urduName ?? ''),
       priceController: TextEditingController(text: product.price.toString()),
-      oldController: TextEditingController(text: product.old?.toString() ?? ''),
-      dealController: TextEditingController(
-        text: product.deal?.toString() ?? '',
-      ),
       labelController: TextEditingController(text: product.label),
-      toneController: TextEditingController(text: product.tone),
+      descriptionController: TextEditingController(text: product.description ?? ''),
+      whatYouCanMakeController: TextEditingController(text: product.whatYouCanMake ?? ''),
       imageUrlController: TextEditingController(text: product.imageUrl ?? ''),
-      salesCountController: TextEditingController(
-        text: product.salesCount.toString(),
-      ),
-      trendingScoreController: TextEditingController(
-        text: product.trendingScore.toString(),
-      ),
+      thumbnailControllers: thumbnails,
     );
   }
 
   void update(String field, String value) {
+    if (field.startsWith('thumbnail_')) {
+      final idx = int.tryParse(field.split('_').last) ?? -1;
+      if (idx >= 0 && idx < thumbnailControllers.length) {
+        thumbnailControllers[idx].text = value;
+      }
+      return;
+    }
+
     switch (field) {
       case 'name':
         nameController.text = value;
         break;
-      case 'unit':
-        unitController.text = value;
+      case 'urduName':
+        urduNameController.text = value;
         break;
       case 'price':
         priceController.text = value;
         break;
-      case 'old':
-        oldController.text = value;
-        break;
-      case 'deal':
-        dealController.text = value;
-        break;
       case 'label':
         labelController.text = value;
         break;
-      case 'tone':
-        toneController.text = value;
+      case 'description':
+        descriptionController.text = value;
+        break;
+      case 'whatYouCanMake':
+        whatYouCanMakeController.text = value;
         break;
       case 'imageUrl':
         imageUrlController.text = value;
-        break;
-      case 'salesCount':
-        salesCountController.text = value;
-        break;
-      case 'trendingScore':
-        trendingScoreController.text = value;
         break;
     }
   }
@@ -849,54 +978,44 @@ class _ProductDraft {
       'name': nameController.text.trim().isEmpty
           ? product.name
           : nameController.text.trim(),
-      'unit': unitController.text.trim().isEmpty
-          ? product.unit
-          : unitController.text.trim(),
       'price': int.tryParse(priceController.text.trim()) ?? product.price,
       'label': labelController.text.trim().isEmpty
           ? product.label
           : labelController.text.trim(),
-      'tone': toneController.text.trim().isEmpty
-          ? product.tone
-          : toneController.text.trim(),
-      'salesCount':
-          int.tryParse(salesCountController.text.trim()) ?? product.salesCount,
-      'trendingScore':
-          int.tryParse(trendingScoreController.text.trim()) ??
-          product.trendingScore,
+      'urduName': urduNameController.text.trim().isEmpty
+          ? (product.urduName ?? '')
+          : urduNameController.text.trim(),
+      'description': descriptionController.text.trim().isEmpty
+          ? (product.description ?? '')
+          : descriptionController.text.trim(),
+      'whatYouCanMake': whatYouCanMakeController.text.trim().isEmpty
+          ? (product.whatYouCanMake ?? '')
+          : whatYouCanMakeController.text.trim(),
     };
 
     if (imageUrlController.text.trim().isNotEmpty) {
       payload['imageUrl'] = imageUrlController.text.trim();
     }
 
-    final oldValue = int.tryParse(oldController.text.trim());
-    if (oldValue != null) {
-      payload['old'] = oldValue;
-    } else if (product.old != null) {
-      payload['old'] = product.old;
-    }
-
-    final dealValue = int.tryParse(dealController.text.trim());
-    if (dealValue != null) {
-      payload['deal'] = dealValue;
-    } else if (product.deal != null) {
-      payload['deal'] = product.deal;
-    }
+    final thumbs = thumbnailControllers
+      .map((c) => c.text.trim())
+      .where((t) => t.isNotEmpty)
+      .toList();
+    if (thumbs.isNotEmpty) payload['thumbnailImageUrls'] = thumbs;
 
     return payload;
   }
 
   void dispose() {
     nameController.dispose();
-    unitController.dispose();
+    urduNameController.dispose();
     priceController.dispose();
-    oldController.dispose();
-    dealController.dispose();
     labelController.dispose();
-    toneController.dispose();
+    descriptionController.dispose();
+    whatYouCanMakeController.dispose();
     imageUrlController.dispose();
-    salesCountController.dispose();
-    trendingScoreController.dispose();
+    for (final c in thumbnailControllers) {
+      c.dispose();
+    }
   }
 }
