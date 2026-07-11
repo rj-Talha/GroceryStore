@@ -12,6 +12,7 @@ import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_placeholder.dart';
+import 'category_screen.dart';
 import 'product_detail_screen.dart';
 import 'search_screen.dart';
 import 'voice_modal.dart';
@@ -811,41 +812,48 @@ class _CategoriesSection extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 0.85,
             children: cats.map((c) {
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Daana.card,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Daana.hairlineSoft),
+              return InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CategoryScreen(category: c.$1)),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: _toneBg[c.$3],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Icon(c.$4, size: 26, color: Daana.mossInk),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(c.$1, style: Daana.sans(size: 11.5, height: 1.1)),
-                    Directionality(
-                      textDirection: TextDirection.rtl,
-                      child: Text(
-                        c.$2,
-                        style: Daana.urdu(
-                          size: 11,
-                          color: Daana.ink50,
-                          height: 1.0,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Daana.card,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Daana.hairlineSoft),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: _toneBg[c.$3],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Icon(c.$4, size: 26, color: Daana.mossInk),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(c.$1, style: Daana.sans(size: 11.5, height: 1.1)),
+                      Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Text(
+                          c.$2,
+                          style: Daana.urdu(
+                            size: 11,
+                            color: Daana.ink50,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }).toList(),
@@ -1012,7 +1020,7 @@ class _MangoList extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.7,
+            childAspectRatio: 0.85,
             children: mangoes
                 .map(
                   (p) => ProductCard(product: p, onAdd: () {}, compact: true),
