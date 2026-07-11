@@ -149,7 +149,7 @@ class _AiChatFabState extends State<_AiChatFab> {
             child: Center(
               child: _hovered
                   ? Text(
-                      'AI Chatbot',
+                      "FAQ's BOT",
                       style: Daana.sans(
                         size: 14,
                         color: Daana.bg,
@@ -267,7 +267,7 @@ class _AiChatSheetState extends State<_AiChatSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'AI Chatbot',
+                              "FAQ's BOT",
                               style: Daana.serif(size: 20, height: 1.0),
                             ),
                             const SizedBox(height: 4),
@@ -814,10 +814,17 @@ class _CategoriesSection extends StatelessWidget {
             children: cats.map((c) {
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => CategoryScreen(category: c.$1)),
-                ),
+                onTap: () {
+                  if (c.$1 == 'Home') {
+                    context.read<CatalogProvider>().refreshProducts();
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => CategoryScreen(category: c.$1)),
+                  );
+                },
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
