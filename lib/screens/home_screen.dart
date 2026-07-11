@@ -57,7 +57,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   const _AITile(),
                   const SizedBox(height: 24),
-                  const _RecommendationsSection(),
+                  const _SuggestionsSection(),
                   const SizedBox(height: 24),
                   const _MangoList(),
                 ],
@@ -947,13 +947,13 @@ class _AITile extends StatelessWidget {
   }
 }
 
-class _RecommendationsSection extends StatelessWidget {
-  const _RecommendationsSection();
+class _SuggestionsSection extends StatelessWidget {
+  const _SuggestionsSection();
 
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
-    final recs = catalog.recommendations;
+    final recs = catalog.suggestions;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -963,7 +963,7 @@ class _RecommendationsSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Eyebrow('For you', size: 9.5),
+              const Eyebrow('Suggestions', size: 9.5),
               const SizedBox(height: 2),
               Text(
                 'Picked for your pantry',

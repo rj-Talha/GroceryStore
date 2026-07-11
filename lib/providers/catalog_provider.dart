@@ -6,6 +6,7 @@ class CatalogProvider extends ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
 
   List<Product> _allProducts = [];
+  List<(Product, String)> _suggestions = [];
   bool _isLoading = true;
   String? _error;
 
@@ -30,17 +31,116 @@ class CatalogProvider extends ChangeNotifier {
   Future<void> refreshProducts() async {
     try {
       _allProducts = await _firestoreService.getProducts();
+      await _refreshSuggestedProducts();
       _error = null;
     } catch (e) {
       _error = e.toString();
+      _suggestions = _buildFallbackSuggestions();
     } finally {
       notifyListeners();
     }
   }
 
+  Future<void> _refreshSuggestedProducts() async {
+    try {
+      final orders = await _firestoreService.getOrders();
+      _suggestions = _buildSuggestionsFromOrders(orders);
+      if (_suggestions.isEmpty) {
+        _suggestions = _buildFallbackSuggestions();
+      }
+    } catch (e) {
+      print('Suggestion refresh error: $e');
+      _suggestions = _buildFallbackSuggestions();
+    }
+  }
+
+  List<(Product, String)> _buildSuggestionsFromOrders(List<StoreOrder> orders) {
+    final productQuantities = <String, int>{};
+
+    for (final order in orders) {
+      for (final item in order.items) {
+        if (item.productId.isEmpty) continue;
+        productQuantities[item.productId] =
+            (productQuantities[item.productId] ?? 0) + item.quantity;
+      }
+    }
+
+    final sortedProductIds = productQuantities.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    final suggestions = <(Product, String)>[];
+    for (final entry in sortedProductIds) {
+      final product = _allProducts.firstWhere(
+        (p) => p.key == entry.key,
+        orElse: () => Product(
+          key: entry.key,
+          name: itemNameForMissingProduct(entry.key),
+          unit: '',
+          price: 0,
+          old: null,
+          deal: null,
+          label: '',
+          tone: 'd',
+          imageUrl: '',
+          salesCount: 0,
+          trendingScore: 0,
+        ),
+      );
+
+      if (product.key.isEmpty) {
+        continue;
+      }
+
+      if (suggestions.length >= 5) break;
+      if (_allProducts.any((p) => p.key == entry.key)) {
+        suggestions.add((product, 'Top ordered'));
+      }
+    }
+
+    if (suggestions.length < 5) {
+      final fallback = _buildFallbackSuggestions();
+      for (final item in fallback) {
+        if (suggestions.length >= 5) break;
+        if (!suggestions.any((entry) => entry.$1.key == item.$1.key)) {
+          suggestions.add(item);
+        }
+      }
+    }
+
+    return suggestions;
+  }
+
+  List<(Product, String)> _buildFallbackSuggestions() {
+    return mostSoldProducts
+        .take(5)
+        .map((p) => (p, 'Most sold this week'))
+        .toList();
+  }
+
+  String itemNameForMissingProduct(String productId) {
+    final matchingProduct = Products.all.values.firstWhere(
+      (product) => product.key == productId,
+      orElse: () => Product(
+        key: productId,
+        name: '',
+        unit: '',
+        price: 0,
+        old: null,
+        deal: null,
+        label: '',
+        tone: 'd',
+        imageUrl: '',
+        salesCount: 0,
+        trendingScore: 0,
+      ),
+    );
+    return matchingProduct.name;
+  }
+
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Product> get allProducts => List.unmodifiable(_allProducts);
+  List<(Product, String)> get suggestions => List.unmodifiable(_suggestions);
 
   List<Product> search(String query) {
     if (query.isEmpty) return _allProducts;
