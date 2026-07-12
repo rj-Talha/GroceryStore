@@ -183,6 +183,54 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     }
   }
 
+  Future<void> _deleteProduct(Product product) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete product?'),
+          content: Text('Delete "${product.name}" from Firebase?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    setState(() {
+      _statusMessage = 'Deleting ${product.name}...';
+      _statusColor = Daana.ink70;
+    });
+
+    try {
+      await _firestoreService.deleteProduct(product.key);
+      await _loadProducts();
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Deleted ${product.name} from Firebase.';
+        _statusColor = Colors.red.shade700;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Failed to delete ${product.name}.';
+        _statusColor = Colors.red.shade700;
+      });
+    }
+  }
+
   Future<void> _updateOrderStatus(StoreOrder order, String status) async {
     setState(() {
       _statusMessage = 'Updating order status...';
@@ -709,6 +757,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                                 }
                               },
                               onUpdate: () => _updateProduct(product),
+                              onDelete: () => _deleteProduct(product),
                             );
                           },
                         )),
@@ -747,12 +796,14 @@ class _ProductCard extends StatelessWidget {
     required this.draft,
     required this.onChanged,
     required this.onUpdate,
+    required this.onDelete,
   });
 
   final Product product;
   final _ProductDraft? draft;
   final void Function(String field, String value) onChanged;
   final VoidCallback onUpdate;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -849,17 +900,35 @@ class _ProductCard extends StatelessWidget {
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
-              child: ElevatedButton.icon(
-                onPressed: onUpdate,
-                icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                label: const Text('Update'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Daana.ink,
-                  foregroundColor: Daana.bg,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline, size: 18),
+                    label: const Text('Delete'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red.shade700,
+                      side: BorderSide(color: Colors.red.shade200),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: onUpdate,
+                    icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                    label: const Text('Update'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Daana.ink,
+                      foregroundColor: Daana.bg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
