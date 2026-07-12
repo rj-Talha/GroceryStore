@@ -11,7 +11,7 @@ class FirestoreService {
       final snapshot = await _firestore.collection('products').get();
 
       if (snapshot.docs.isEmpty) {
-        return Products.all.values.toList();
+        return [];
       }
 
       return snapshot.docs.map((doc) {
@@ -19,8 +19,7 @@ class FirestoreService {
       }).toList();
     } catch (e) {
       print('Firestore error: $e');
-
-      return Products.all.values.toList();
+      return [];
     }
   }
 

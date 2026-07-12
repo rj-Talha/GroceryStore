@@ -59,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   const _SuggestionsSection(),
                   const SizedBox(height: 24),
-                  const _MangoList(),
+                  const _AllProductsSection(),
                 ],
               ),
             ),
@@ -1004,36 +1004,45 @@ class _SuggestionsSection extends StatelessWidget {
   }
 }
 
-class _MangoList extends StatelessWidget {
-  const _MangoList();
+class _AllProductsSection extends StatelessWidget {
+  const _AllProductsSection();
 
   @override
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
-    final mangoes = catalog.seasonalMangoes;
+    final products = catalog.allProducts;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('In season · May', size: 9.5),
+          const Eyebrow('All Products', size: 9.5),
           const SizedBox(height: 2),
-          Text('The mango list', style: Daana.serif(size: 22, height: 1.0)),
+          Text('Browse every product', style: Daana.serif(size: 22, height: 1.0)),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.85,
-            children: mangoes
-                .map(
-                  (p) => ProductCard(product: p, onAdd: () {}, compact: true),
-                )
-                .toList(),
-          ),
+          if (products.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No products available.',
+                style: Daana.sans(size: 14, color: Daana.ink50),
+              ),
+            )
+          else
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.85,
+              children: products
+                  .map(
+                    (p) => ProductCard(product: p, onAdd: () {}, compact: true),
+                  )
+                  .toList(),
+            ),
         ],
       ),
     );
