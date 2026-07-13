@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../data/products.dart';
-import 'catalog_generator.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -20,6 +19,19 @@ class FirestoreService {
     } catch (e) {
       print('Firestore error: $e');
       return [];
+    }
+  }
+
+  Future<Product?> getProduct(String productId) async {
+    try {
+      final doc = await _firestore.collection('products').doc(productId).get();
+      if (!doc.exists || doc.data() == null) {
+        return null;
+      }
+      return Product.fromJson(doc.id, doc.data()!);
+    } catch (e) {
+      print('Firestore error: $e');
+      return null;
     }
   }
 
