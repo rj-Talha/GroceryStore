@@ -13,6 +13,7 @@ import '../widgets/product_placeholder.dart';
 import 'category_screen.dart';
 import 'product_detail_screen.dart';
 import 'search_screen.dart';
+import 'ai_recipe_screen.dart';
 import 'sign_in_screen.dart';
 import 'voice_modal.dart';
 
@@ -818,24 +819,30 @@ class _AITile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            Container(
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Daana.bg.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Daana.bg.withOpacity(0.18)),
+            GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AIRecipeScreen()),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Open assistant',
-                    style: Daana.sans(size: 13, color: Daana.bg),
-                  ),
-                  const SizedBox(width: 6),
-                  DaanaIcon('arrowR', size: 13, color: Daana.bg),
-                ],
+              child: Container(
+                height: 36,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: Daana.bg.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Daana.bg.withOpacity(0.18)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Open assistant',
+                      style: Daana.sans(size: 13, color: Daana.bg),
+                    ),
+                    const SizedBox(width: 6),
+                    DaanaIcon('arrowR', size: 13, color: Daana.bg),
+                  ],
+                ),
               ),
             ),
           ],
@@ -936,9 +943,17 @@ class _AllProductsSection extends StatelessWidget {
               crossAxisSpacing: 10,
               childAspectRatio: 0.85,
               children: products
-                  .map(
-                    (p) => ProductCard(product: p, onAdd: () {}, compact: true),
-                  )
+                  .map((p) => ProductCard(
+                        product: p,
+                        compact: true,
+                        onAdd: () {},
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(product: p),
+                          ),
+                        ),
+                      ))
                   .toList(),
             ),
         ],
