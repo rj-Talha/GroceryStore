@@ -13,6 +13,7 @@ import '../widgets/product_placeholder.dart';
 import 'category_screen.dart';
 import 'product_detail_screen.dart';
 import 'search_screen.dart';
+import 'sign_in_screen.dart';
 import 'voice_modal.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -465,15 +466,34 @@ class _AddressBarState extends State<_AddressBar> {
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: Daana.card,
-              shape: BoxShape.circle,
-              border: Border.all(color: Daana.hairlineSoft),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierColor: Colors.transparent,
+                    pageBuilder: (routeContext, animation, secondaryAnimation) {
+                      return SignInScreen(
+                        onClose: () => Navigator.of(routeContext).pop(),
+                      );
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Daana.card,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Daana.hairlineSoft),
+                ),
+                child: const Center(child: DaanaIcon('user', size: 17)),
+              ),
             ),
-            child: const Center(child: DaanaIcon('user', size: 17)),
           ),
         ],
       ),

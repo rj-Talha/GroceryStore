@@ -153,6 +153,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     }
 
                     try {
+                      final orderItems = cartProvider.items.map((item) {
+                        return {
+                          'productId': item.product.key,
+                          'productName': item.product.name,
+                          'unit': item.product.unit,
+                          'quantity': item.quantity,
+                          'unitPrice': item.product.price,
+                          'lineTotal': item.product.price * item.quantity,
+                        };
+                      }).toList();
+
                       await _firestoreService.addOrder({
                         'customerName':
                             '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
@@ -167,17 +178,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         'serviceFee': cartProvider.serviceFee,
                         'total': cartProvider.total,
                         'createdAt': DateTime.now().toIso8601String(),
-                        'items': cartProvider.items.map((item) {
-                          return {
-                            'productId': item.product.key,
-                            'productName': item.product.name,
-                            'unit': item.product.unit,
-                            'quantity': item.quantity,
-                            'unitPrice': item.product.price,
-                            'lineTotal': item.product.price * item.quantity,
-                          };
-                        }).toList(),
+                        'items': orderItems,
                       });
+                      await _firestoreService.updateStockAfterOrder(orderItems);
 
                       if (!mounted) return;
                       cartProvider.clearCart();

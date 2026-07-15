@@ -72,6 +72,47 @@ class FirestoreService {
     await _firestore.collection('orders').add(data);
   }
 
+  static int calculateRemainingStock(int? availableStock, int orderedQuantity) {
+    if (availableStock == null) {
+      return 0;
+    }
+    return (availableStock - orderedQuantity).clamp(0, 999999999);
+  }
+
+  Future<void> updateStockAfterOrder(List<Map<String, dynamic>> items) async {
+    if (items.isEmpty) {
+      return;
+    }
+
+    final batch = _firestore.batch();
+
+    for (final item in items) {
+      final productId = item['productId'] as String?;
+      final quantity = item['quantity'] as int? ?? 0;
+      if (productId == null || quantity <= 0) {
+        continue;
+      }
+
+      final docRef = _firestore.collection('products').doc(productId);
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) {
+        continue;
+      }
+
+      final currentStock = (snapshot.data()?['availableStock'] as int?);
+      final remainingStock = calculateRemainingStock(currentStock, quantity);
+      batch.update(docRef, {'availableStock': remainingStock});
+    }
+
+    if (items.where((item) {
+      final productId = item['productId'] as String?;
+      final quantity = item['quantity'] as int? ?? 0;
+      return productId != null && quantity > 0;
+    }).isNotEmpty) {
+      await batch.commit();
+    }
+  }
+
   Future<void> updateOrderStatus(String orderId, String status) async {
     await _firestore.collection('orders').doc(orderId).update({
       'status': status,
