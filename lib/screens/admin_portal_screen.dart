@@ -261,6 +261,8 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     final priceController = TextEditingController();
     final descriptionController = TextEditingController();
     final whatController = TextEditingController();
+    final categoryController = TextEditingController();
+    final stockController = TextEditingController();
     final imageController = TextEditingController();
     final thumbs = List.generate(4, (_) => TextEditingController());
 
@@ -288,6 +290,15 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 TextField(
                   controller: priceController,
                   decoration: const InputDecoration(labelText: 'Price'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                ),
+                TextField(
+                  controller: stockController,
+                  decoration: const InputDecoration(labelText: 'Available stock'),
                   keyboardType: TextInputType.number,
                 ),
                 TextField(
@@ -322,6 +333,8 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   priceController,
                   descriptionController,
                   whatController,
+                  categoryController,
+                  stockController,
                   imageController,
                   ...thumbs
                 ]) {
@@ -336,6 +349,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 final name = nameController.text.trim();
                 final label = labelController.text.trim();
                 final price = int.tryParse(priceController.text.trim()) ?? 0;
+                final availableStock = int.tryParse(stockController.text.trim()) ?? 0;
                 if (name.isEmpty || label.isEmpty || price <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please provide name, label and valid price')),
@@ -347,6 +361,8 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   'name': name,
                   'label': label,
                   'price': price,
+                  'category': categoryController.text.trim(),
+                  'availableStock': availableStock,
                   'urduName': urduController.text.trim(),
                   'description': descriptionController.text.trim(),
                   'whatYouCanMake': whatController.text.trim(),
@@ -382,6 +398,8 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                     priceController,
                     descriptionController,
                     whatController,
+                    categoryController,
+                    stockController,
                     imageController,
                     ...thumbs
                   ]) {
@@ -860,6 +878,23 @@ class _ProductCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
+                  width: 180,
+                  child: _buildField(
+                    'Category',
+                    fields?.categoryController,
+                    (value) => onChanged('category', value),
+                  ),
+                ),
+                SizedBox(
+                  width: 160,
+                  child: _buildField(
+                    'Available stock',
+                    fields?.availableStockController,
+                    (value) => onChanged('availableStock', value),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                SizedBox(
                   width: 360,
                   child: _buildField(
                     'Description',
@@ -974,6 +1009,8 @@ class _ProductDraft {
     required this.labelController,
     required this.descriptionController,
     required this.whatYouCanMakeController,
+    required this.categoryController,
+    required this.availableStockController,
     required this.imageUrlController,
     required this.thumbnailControllers,
   });
@@ -984,6 +1021,8 @@ class _ProductDraft {
   final TextEditingController labelController;
   final TextEditingController descriptionController;
   final TextEditingController whatYouCanMakeController;
+  final TextEditingController categoryController;
+  final TextEditingController availableStockController;
   final TextEditingController imageUrlController;
   final List<TextEditingController> thumbnailControllers;
 
@@ -1003,6 +1042,8 @@ class _ProductDraft {
       labelController: TextEditingController(text: product.label),
       descriptionController: TextEditingController(text: product.description ?? ''),
       whatYouCanMakeController: TextEditingController(text: product.whatYouCanMake ?? ''),
+      categoryController: TextEditingController(text: product.category ?? ''),
+      availableStockController: TextEditingController(text: product.availableStock?.toString() ?? ''),
       imageUrlController: TextEditingController(text: product.imageUrl ?? ''),
       thumbnailControllers: thumbnails,
     );
@@ -1036,6 +1077,12 @@ class _ProductDraft {
       case 'whatYouCanMake':
         whatYouCanMakeController.text = value;
         break;
+      case 'category':
+        categoryController.text = value;
+        break;
+      case 'availableStock':
+        availableStockController.text = value;
+        break;
       case 'imageUrl':
         imageUrlController.text = value;
         break;
@@ -1060,6 +1107,10 @@ class _ProductDraft {
       'whatYouCanMake': whatYouCanMakeController.text.trim().isEmpty
           ? (product.whatYouCanMake ?? '')
           : whatYouCanMakeController.text.trim(),
+      'category': categoryController.text.trim().isEmpty
+          ? (product.category ?? '')
+          : categoryController.text.trim(),
+      'availableStock': int.tryParse(availableStockController.text.trim()) ?? product.availableStock ?? 0,
     };
 
     if (imageUrlController.text.trim().isNotEmpty) {
@@ -1082,6 +1133,8 @@ class _ProductDraft {
     labelController.dispose();
     descriptionController.dispose();
     whatYouCanMakeController.dispose();
+    categoryController.dispose();
+    availableStockController.dispose();
     imageUrlController.dispose();
     for (final c in thumbnailControllers) {
       c.dispose();

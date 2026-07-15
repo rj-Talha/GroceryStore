@@ -128,6 +128,8 @@ class Product {
   final String? quantity;
   final String? whatYouCanMake;
   final List<String>? thumbnailImageUrls;
+  final String? category;
+  final int? availableStock;
 
   const Product({
     required this.key,
@@ -146,6 +148,8 @@ class Product {
     this.quantity,
     this.whatYouCanMake,
     this.thumbnailImageUrls,
+    this.category,
+    this.availableStock,
   });
 
   factory Product.fromJson(String key, Map<String, dynamic> json) {
@@ -168,6 +172,8 @@ class Product {
       thumbnailImageUrls: (json['thumbnailImageUrls'] as List<dynamic>?)
           ?.map((item) => item.toString())
           .toList(),
+      category: json['category'] as String?,
+      availableStock: json['availableStock'] as int?,
     );
   }
 
@@ -188,6 +194,8 @@ class Product {
       if (quantity != null) 'quantity': quantity,
       if (whatYouCanMake != null) 'whatYouCanMake': whatYouCanMake,
       if (thumbnailImageUrls != null) 'thumbnailImageUrls': thumbnailImageUrls,
+      if (category != null) 'category': category,
+      if (availableStock != null) 'availableStock': availableStock,
     };
   }
 }
