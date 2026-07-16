@@ -32,6 +32,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final TextEditingController _searchController = TextEditingController();
   final Map<String, _ProductDraft> _drafts = {};
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<Product> _products = [];
   List<Product> _filteredProducts = [];
@@ -509,7 +510,9 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lowStockCount = _products.where((p) => (p.availableStock ?? 0) < 10).length;
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: Daana.bg,
       appBar: AppBar(
         backgroundColor: Daana.bg,
@@ -520,12 +523,112 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           style: Daana.serif(size: 24, weight: FontWeight.w700),
         ),
         actions: [
+          // Shortage button with badge
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                TextButton(
+                  onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Daana.ink,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                  child: const Text('Shortage'),
+                ),
+                if (lowStockCount > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                      child: Center(
+                        child: Text(
+                          '$lowStockCount',
+                          style: Daana.sans(size: 12, color: Colors.white, weight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           IconButton(
             tooltip: 'Sign out',
             onPressed: () async => FirebaseAuth.instance.signOut(),
             icon: const Icon(Icons.logout_outlined),
           ),
         ],
+      ),
+      endDrawer: Drawer(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('Low stock products', style: Daana.serif(size: 18, weight: FontWeight.w700)),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).maybePop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Builder(builder: (context) {
+                    final lowStockProducts = _products.where((p) => (p.availableStock ?? 0) < 10).toList();
+                    if (lowStockProducts.isEmpty) {
+                      return Center(child: Text('No products with low stock.', style: Daana.sans(size: 14, color: Daana.ink70)));
+                    }
+
+                    return ListView.separated(
+                      itemCount: lowStockProducts.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final p = lowStockProducts[index];
+                        return Card(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                          child: ListTile(
+                            title: Text(p.name, style: Daana.sans(size: 14, weight: FontWeight.w600)),
+                            subtitle: Text('Available: ${p.availableStock ?? 0}', style: Daana.sans(size: 12, color: Daana.ink70)),
+                            trailing: ElevatedButton(
+                              onPressed: () {
+                                // close drawer and scroll to product in main list? For now just close.
+                                Navigator.of(context).maybePop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Daana.ink,
+                                foregroundColor: Daana.bg,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                              ),
+                              child: const Text('Close'),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
