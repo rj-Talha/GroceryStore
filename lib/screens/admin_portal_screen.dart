@@ -565,7 +565,14 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           ),
           IconButton(
             tooltip: 'Sign out',
-            onPressed: () async => FirebaseAuth.instance.signOut(),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (!mounted) return;
+              Navigator.of(context, rootNavigator: true).pushNamedAndRemoveUntil(
+                '/',
+                (route) => false,
+              );
+            },
             icon: const Icon(Icons.logout_outlined),
           ),
         ],

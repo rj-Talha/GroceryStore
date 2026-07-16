@@ -273,7 +273,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       top: -0,
                       right: -0,
                       child: IconButton(
-                        onPressed: widget.onClose,
+                        onPressed: widget.onClose ?? () => Navigator.of(context, rootNavigator: true).maybePop(),
                         icon: const Icon(Icons.close, size: 24),
                         color: Daana.ink,
                         tooltip: 'Close',
