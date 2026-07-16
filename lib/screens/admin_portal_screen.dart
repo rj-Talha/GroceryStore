@@ -263,6 +263,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     final descriptionController = TextEditingController();
     final whatController = TextEditingController();
     final categoryController = TextEditingController();
+    final quantityController = TextEditingController();
     final stockController = TextEditingController();
     final imageController = TextEditingController();
     final thumbs = List.generate(4, (_) => TextEditingController());
@@ -296,6 +297,10 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 TextField(
                   controller: categoryController,
                   decoration: const InputDecoration(labelText: 'Category'),
+                ),
+                TextField(
+                  controller: quantityController,
+                  decoration: const InputDecoration(labelText: 'Quantity'),
                 ),
                 TextField(
                   controller: stockController,
@@ -335,6 +340,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   descriptionController,
                   whatController,
                   categoryController,
+                  quantityController,
                   stockController,
                   imageController,
                   ...thumbs
@@ -351,6 +357,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 final label = labelController.text.trim();
                 final price = int.tryParse(priceController.text.trim()) ?? 0;
                 final availableStock = int.tryParse(stockController.text.trim()) ?? 0;
+                final quantity = quantityController.text.trim();
                 if (name.isEmpty || label.isEmpty || price <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please provide name, label and valid price')),
@@ -363,6 +370,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   'label': label,
                   'price': price,
                   'category': categoryController.text.trim(),
+                  'quantity': quantity.isEmpty ? null : quantity,
                   'availableStock': availableStock,
                   'urduName': urduController.text.trim(),
                   'description': descriptionController.text.trim(),
@@ -400,6 +408,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                     descriptionController,
                     whatController,
                     categoryController,
+                    quantityController,
                     stockController,
                     imageController,
                     ...thumbs
@@ -949,6 +958,8 @@ class _ProductCard extends StatelessWidget {
             const SizedBox(height: 4),
             if ((product.urduName ?? '').isNotEmpty)
               Text(product.urduName!, style: Daana.sans(size: 13, color: Daana.ink70)),
+            if ((product.quantity ?? '').isNotEmpty)
+              Text(product.quantity!, style: Daana.sans(size: 13, color: Daana.ink70)),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
@@ -993,6 +1004,14 @@ class _ProductCard extends StatelessWidget {
                     'Category',
                     fields?.categoryController,
                     (value) => onChanged('category', value),
+                  ),
+                ),
+                SizedBox(
+                  width: 150,
+                  child: _buildField(
+                    'Quantity',
+                    fields?.quantityController,
+                    (value) => onChanged('quantity', value),
                   ),
                 ),
                 SizedBox(
@@ -1120,6 +1139,7 @@ class _ProductDraft {
     required this.descriptionController,
     required this.whatYouCanMakeController,
     required this.categoryController,
+    required this.quantityController,
     required this.availableStockController,
     required this.imageUrlController,
     required this.thumbnailControllers,
@@ -1132,6 +1152,7 @@ class _ProductDraft {
   final TextEditingController descriptionController;
   final TextEditingController whatYouCanMakeController;
   final TextEditingController categoryController;
+  final TextEditingController quantityController;
   final TextEditingController availableStockController;
   final TextEditingController imageUrlController;
   final List<TextEditingController> thumbnailControllers;
@@ -1153,6 +1174,7 @@ class _ProductDraft {
       descriptionController: TextEditingController(text: product.description ?? ''),
       whatYouCanMakeController: TextEditingController(text: product.whatYouCanMake ?? ''),
       categoryController: TextEditingController(text: product.category ?? ''),
+      quantityController: TextEditingController(text: product.quantity ?? ''),
       availableStockController: TextEditingController(text: product.availableStock?.toString() ?? ''),
       imageUrlController: TextEditingController(text: product.imageUrl ?? ''),
       thumbnailControllers: thumbnails,
@@ -1190,6 +1212,9 @@ class _ProductDraft {
       case 'category':
         categoryController.text = value;
         break;
+      case 'quantity':
+        quantityController.text = value;
+        break;
       case 'availableStock':
         availableStockController.text = value;
         break;
@@ -1223,6 +1248,12 @@ class _ProductDraft {
       'availableStock': int.tryParse(availableStockController.text.trim()) ?? product.availableStock ?? 0,
     };
 
+    if (quantityController.text.trim().isNotEmpty) {
+      payload['quantity'] = quantityController.text.trim();
+    } else if (product.quantity != null) {
+      payload['quantity'] = product.quantity;
+    }
+
     if (imageUrlController.text.trim().isNotEmpty) {
       payload['imageUrl'] = imageUrlController.text.trim();
     }
@@ -1244,6 +1275,7 @@ class _ProductDraft {
     descriptionController.dispose();
     whatYouCanMakeController.dispose();
     categoryController.dispose();
+    quantityController.dispose();
     availableStockController.dispose();
     imageUrlController.dispose();
     for (final c in thumbnailControllers) {
