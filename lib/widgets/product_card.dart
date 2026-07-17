@@ -11,6 +11,7 @@ class ProductCard extends StatelessWidget {
   final VoidCallback? onAdd;
   final VoidCallback? onTap;
   final String? reason;
+  final String? subtitle;
 
   const ProductCard({
     super.key,
@@ -19,6 +20,7 @@ class ProductCard extends StatelessWidget {
     this.onAdd,
     this.onTap,
     this.reason,
+    this.subtitle,
   });
 
   @override
@@ -75,7 +77,7 @@ class ProductCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              product.unit,
+              subtitle ?? product.unit,
               style: Daana.sans(size: 11.5, color: Daana.ink50),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -890,6 +890,9 @@ class _SuggestionsSection extends StatelessWidget {
                 width: 168,
                 child: ProductCard(
                   product: p,
+                  subtitle: p.quantity?.trim().isNotEmpty == true
+                      ? p.quantity!.trim()
+                      : p.unit,
                   reason: reason,
                   compact: true,
                   onAdd: () {},
@@ -954,6 +957,9 @@ class _AllProductsSection extends StatelessWidget {
                   children: products
                       .map((p) => ProductCard(
                             product: p,
+                            subtitle: p.quantity?.trim().isNotEmpty == true
+                                ? p.quantity!.trim()
+                                : p.unit,
                             compact: true,
                             onAdd: () {},
                             onTap: () => Navigator.push(
