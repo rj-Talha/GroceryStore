@@ -28,6 +28,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Product> _recommendations = [];
   bool _hasInitialized = false;
   bool _isLoadingProduct = false;
+  late String _mainImageUrl;
+  late List<String> _thumbnailImageUrls;
+  int _selectedThumbnailIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeGallery(widget.product);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.key != widget.product.key) {
+      _initializeGallery(widget.product);
+    }
+  }
+
+  void _initializeGallery(Product product) {
+    final detail = _detailContent(product);
+    _mainImageUrl = detail['imageUrl'] as String;
+    _thumbnailImageUrls =
+        List<String>.from(detail['thumbnailImageUrls'] as List<dynamic>);
+    _selectedThumbnailIndex = 0;
+  }
+
+  void _swapMainImageWithThumbnail(int index) {
+    if (index < 0 || index >= _thumbnailImageUrls.length) return;
+
+    setState(() {
+      final selectedImageUrl = _thumbnailImageUrls[index];
+      _thumbnailImageUrls[index] = _mainImageUrl;
+      _mainImageUrl = selectedImageUrl;
+      _selectedThumbnailIndex = index;
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -72,6 +108,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       if (firebaseProduct != null && mounted) {
         setState(() {
           _resolvedProduct = firebaseProduct;
+          _initializeGallery(firebaseProduct);
         });
       }
     } catch (e) {
@@ -125,7 +162,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     label: '${p.name.toLowerCase()} — hero',
                     tone: p.tone,
                     radius: 20,
-                    imageUrl: detail['imageUrl'] as String?,
+                    imageUrl: _mainImageUrl,
                   ),
                 ),
               ),
@@ -136,7 +173,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _Thumbnails(
                   tone: p.tone,
-                  imageUrls: List<String>.from(detail['thumbnailImageUrls'] as List<dynamic>),
+                  imageUrls: _thumbnailImageUrls,
+                  selectedIndex: _selectedThumbnailIndex,
+                  onTap: _swapMainImageWithThumbnail,
                 ),
               ),
             ),
@@ -188,7 +227,14 @@ class _CircleBtn extends StatelessWidget {
 class _Thumbnails extends StatelessWidget {
   final String tone;
   final List<String> imageUrls;
-  const _Thumbnails({required this.tone, required this.imageUrls});
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+  const _Thumbnails({
+    required this.tone,
+    required this.imageUrls,
+    required this.selectedIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -203,21 +249,24 @@ class _Thumbnails extends StatelessWidget {
           return Expanded(
             child: Padding(
               padding: EdgeInsets.only(right: i < count - 1 ? 10 : 0),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: i == 0 ? Daana.ink : Daana.hairlineSoft,
-                    width: i == 0 ? 1.5 : 1,
+              child: GestureDetector(
+                onTap: () => onTap(i),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: i == selectedIndex ? Daana.ink : Daana.hairlineSoft,
+                      width: i == selectedIndex ? 1.5 : 1,
+                    ),
                   ),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: ProductPlaceholder(
-                    label: 'detail ${i + 1}',
-                    tone: tone,
-                    radius: 10,
-                    imageUrl: imageUrl,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: ProductPlaceholder(
+                      label: 'detail ${i + 1}',
+                      tone: tone,
+                      radius: 10,
+                      imageUrl: imageUrl,
+                    ),
                   ),
                 ),
               ),
