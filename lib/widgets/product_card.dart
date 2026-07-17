@@ -95,6 +95,8 @@ class ProductCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         reason!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: Daana.sans(size: 11.5, color: Daana.moss, height: 1.3),
                       ),
                     ),

@@ -878,7 +878,7 @@ class _SuggestionsSection extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 270,
+          height: 300,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -935,26 +935,37 @@ class _AllProductsSection extends StatelessWidget {
               ),
             )
           else
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.85,
-              children: products
-                  .map((p) => ProductCard(
-                        product: p,
-                        compact: true,
-                        onAdd: () {},
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(product: p),
-                          ),
-                        ),
-                      ))
-                  .toList(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final crossAxisCount = width >= 1200
+                    ? 4
+                    : width >= 800
+                        ? 3
+                        : 2;
+
+                return GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.72,
+                  children: products
+                      .map((p) => ProductCard(
+                            product: p,
+                            compact: true,
+                            onAdd: () {},
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProductDetailScreen(product: p),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                );
+              },
             ),
         ],
       ),
