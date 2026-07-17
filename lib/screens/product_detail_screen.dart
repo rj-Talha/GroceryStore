@@ -6,8 +6,10 @@ import '../services/catalog_generator.dart';
 import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
+import '../widgets/app_footer.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
+import '../widgets/home_app_bar.dart';
 import '../widgets/price.dart';
 import '../widgets/product_placeholder.dart';
 
@@ -63,6 +65,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _mainImageUrl = selectedImageUrl;
       _selectedThumbnailIndex = index;
     });
+  }
+
+  void _onFooterSelected(int index) {
+    activeAppTab.value = index;
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -130,10 +137,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
     return Scaffold(
       backgroundColor: Daana.bg,
+      bottomNavigationBar: AppFooter(
+        selectedIndex: 0,
+        onSelected: _onFooterSelected,
+      ),
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
           slivers: [
+            const SliverToBoxAdapter(child: HomeAppBar()),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 20, 8),

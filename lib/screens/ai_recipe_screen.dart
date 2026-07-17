@@ -6,6 +6,7 @@ import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
+import '../widgets/home_app_bar.dart';
 import '../widgets/price.dart';
 import '../widgets/product_placeholder.dart';
 
@@ -77,6 +78,8 @@ class _AIRecipeScreenState extends State<AIRecipeScreen> {
         bottom: false,
         child: CustomScrollView(
           slivers: [
+            const SliverToBoxAdapter(child: HomeAppBar()),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),

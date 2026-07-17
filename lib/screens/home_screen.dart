@@ -531,7 +531,7 @@ class _SearchBar extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Search "ٹماٹر" or "atta"',
+                        'Search "ٹماٹر" or "Tomato"',
                         style: Daana.sans(size: 14, color: Daana.ink50),
                       ),
                     ),
