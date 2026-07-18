@@ -134,6 +134,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final p = _resolvedProduct ?? widget.product;
     final cart = context.watch<CartProvider>();
     final detail = _detailContent(p);
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       backgroundColor: Daana.bg,
@@ -144,7 +145,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
-          slivers: [
+          slivers: isDesktop ? _desktopSlivers(p, detail, cart) : [
             const SliverToBoxAdapter(child: HomeAppBar()),
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
             SliverToBoxAdapter(
@@ -214,6 +215,115 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             SliverToBoxAdapter(child: const _MetaStrip()),
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _desktopSlivers(
+    Product product,
+    Map<String, dynamic> detail,
+    CartProvider cart,
+  ) {
+    return [
+      const SliverToBoxAdapter(child: HomeAppBar()),
+      SliverToBoxAdapter(
+        child: _DesktopContent(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const DaanaIcon('chevL', size: 22),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Row(children: const [
+                      _CircleBtn(icon: 'heart'),
+                      SizedBox(width: 8),
+                      _CircleBtn(icon: 'bag'),
+                    ]),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 11,
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: ProductPlaceholder(
+                        label: '${product.name.toLowerCase()} â€” hero',
+                        tone: product.tone,
+                        radius: 24,
+                        imageUrl: _mainImageUrl,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                  Expanded(
+                    flex: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _Header(product: product, detail: detail, desktop: true),
+                        const SizedBox(height: 22),
+                        _CTA(
+                          qty: qty,
+                          price: product.price,
+                          padding: EdgeInsets.zero,
+                          onDec: () => setState(() => qty = (qty - 1).clamp(1, 99)),
+                          onInc: () => setState(() => qty++),
+                          onAdd: () {
+                            cart.addItem(product, qty);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${product.name} added to cart'),
+                                duration: const Duration(seconds: 2),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _Thumbnails(
+                tone: product.tone,
+                imageUrls: _thumbnailImageUrls,
+                selectedIndex: _selectedThumbnailIndex,
+                onTap: _swapMainImageWithThumbnail,
+              ),
+              _RecommendedItems(recommendations: _recommendations),
+              const _MetaStrip(),
+              const SizedBox(height: 80),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
+}
+
+class _DesktopContent extends StatelessWidget {
+  final Widget child;
+  const _DesktopContent({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1280),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 0),
+          child: child,
         ),
       ),
     );
@@ -294,12 +404,17 @@ class _Thumbnails extends StatelessWidget {
 class _Header extends StatelessWidget {
   final Product product;
   final Map<String, dynamic> detail;
-  const _Header({required this.product, required this.detail});
+  final bool desktop;
+  const _Header({
+    required this.product,
+    required this.detail,
+    this.desktop = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: desktop ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -316,7 +431,7 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(product.name, style: Daana.serif(size: 44, height: 1.0)),
+          Text(product.name, style: Daana.serif(size: desktop ? 42 : 44, height: 1.0)),
           const SizedBox(height: 4),
           Directionality(
             textDirection: TextDirection.rtl,
@@ -396,12 +511,20 @@ class _CTA extends StatelessWidget {
   final VoidCallback onDec;
   final VoidCallback onInc;
   final VoidCallback onAdd;
-  const _CTA({required this.qty, required this.price, required this.onDec, required this.onInc, required this.onAdd});
+  final EdgeInsetsGeometry padding;
+  const _CTA({
+    required this.qty,
+    required this.price,
+    required this.onDec,
+    required this.onInc,
+    required this.onAdd,
+    this.padding = const EdgeInsets.fromLTRB(20, 16, 20, 0),
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: padding,
       child: Row(
         children: [
           Container(
