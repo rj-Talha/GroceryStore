@@ -47,7 +47,7 @@ class DaanaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'daana',
+      title: 'SmartGroceryStore',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Daana.bg,
