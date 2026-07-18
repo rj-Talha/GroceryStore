@@ -113,10 +113,16 @@ class FirestoreService {
     }
   }
 
-  Future<void> updateOrderStatus(String orderId, String status) async {
-    await _firestore.collection('orders').doc(orderId).update({
-      'status': status,
-    });
+  Future<void> updateOrderStatus(
+    String orderId,
+    String status, {
+    String? paymentStatus,
+  }) async {
+    final updates = <String, dynamic>{'status': status};
+    if (paymentStatus != null) {
+      updates['paymentStatus'] = paymentStatus;
+    }
+    await _firestore.collection('orders').doc(orderId).update(updates);
   }
 
   Future<void> seedProducts() async {

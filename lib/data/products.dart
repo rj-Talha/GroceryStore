@@ -46,6 +46,7 @@ class StoreOrder {
   final String email;
   final String address;
   final String paymentMethod;
+  final String paymentStatus;
   final String status;
   final int subtotal;
   final int deliveryFee;
@@ -61,6 +62,7 @@ class StoreOrder {
     required this.email,
     required this.address,
     required this.paymentMethod,
+    required this.paymentStatus,
     required this.status,
     required this.subtotal,
     required this.deliveryFee,
@@ -72,6 +74,13 @@ class StoreOrder {
 
   factory StoreOrder.fromJson(String id, Map<String, dynamic> json) {
     final itemsJson = json['items'] as List<dynamic>? ?? const [];
+    final paymentMethod =
+        json['paymentMethod'] as String? ?? 'Cash on delivery';
+    final status = json['status'] as String? ?? 'processing';
+    final paymentStatus = json['paymentStatus'] as String? ??
+        (paymentMethod == 'Online payment' || status == 'delivered'
+            ? 'paid'
+            : 'pending');
 
     return StoreOrder(
       id: id,
@@ -79,8 +88,9 @@ class StoreOrder {
       phone: json['phone'] as String? ?? '',
       email: json['email'] as String? ?? '',
       address: json['address'] as String? ?? '',
-      paymentMethod: json['paymentMethod'] as String? ?? 'Cash on delivery',
-      status: json['status'] as String? ?? 'processing',
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentStatus,
+      status: status,
       subtotal: json['subtotal'] as int? ?? 0,
       deliveryFee: json['deliveryFee'] as int? ?? 0,
       serviceFee: json['serviceFee'] as int? ?? 0,
@@ -100,6 +110,7 @@ class StoreOrder {
       'email': email,
       'address': address,
       'paymentMethod': paymentMethod,
+      'paymentStatus': paymentStatus,
       'status': status,
       'subtotal': subtotal,
       'deliveryFee': deliveryFee,

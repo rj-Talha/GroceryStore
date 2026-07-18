@@ -22,7 +22,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
-  final _paymentMethod = 'Cash on delivery';
+  String _paymentMethod = 'Cash on delivery';
 
   @override
   void dispose() {
@@ -102,37 +102,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: Daana.sans(size: 14, weight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Daana.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Daana.hairlineSoft),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.local_shipping_outlined, size: 18),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Cash on delivery',
-                              style: Daana.sans(
-                                size: 14,
-                                weight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              'Pay when your order arrives.',
-                              style: Daana.sans(size: 12, color: Daana.ink50),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                _buildPaymentOption(
+                  title: 'Cash on delivery',
+                  description: 'Pay when your order arrives.',
+                  icon: Icons.local_shipping_outlined,
+                ),
+                const SizedBox(height: 10),
+                _buildPaymentOption(
+                  title: 'Online payment',
+                  description: 'Pay securely online before delivery.',
+                  icon: Icons.credit_card_outlined,
                 ),
                 const SizedBox(height: 24),
                 Btn(
@@ -150,6 +129,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         const SnackBar(content: Text('Your cart is empty.')),
                       );
                       return;
+                    }
+
+                    if (_paymentMethod == 'Online payment') {
+                      final paymentCompleted = await _showDummyStripePaymentSheet(
+                        cartProvider.total,
+                      );
+                      if (!paymentCompleted || !mounted) return;
                     }
 
                     try {
@@ -172,6 +158,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         'email': _emailController.text.trim(),
                         'address': _addressController.text.trim(),
                         'paymentMethod': _paymentMethod,
+                        'paymentStatus':
+                            _paymentMethod == 'Online payment' ? 'paid' : 'pending',
                         'status': 'processing',
                         'subtotal': cartProvider.subtotal,
                         'deliveryFee': cartProvider.deliveryFee,
@@ -206,6 +194,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
     );
+  }
+
+  Future<bool> _showDummyStripePaymentSheet(num total) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DummyStripePaymentSheet(total: total),
+    );
+
+    return result ?? false;
   }
 
   Widget _buildTextField({
@@ -247,6 +246,193 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentOption({
+    required String title,
+    required String description,
+    required IconData icon,
+  }) {
+    final isSelected = _paymentMethod == title;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => setState(() => _paymentMethod = title),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Daana.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? Daana.ink : Daana.hairlineSoft,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Daana.sans(size: 14, weight: FontWeight.w600),
+                  ),
+                  Text(
+                    description,
+                    style: Daana.sans(size: 12, color: Daana.ink50),
+                  ),
+                ],
+              ),
+            ),
+            Radio<String>(
+              value: title,
+              groupValue: _paymentMethod,
+              activeColor: Daana.ink,
+              onChanged: (value) {
+                if (value != null) setState(() => _paymentMethod = value);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DummyStripePaymentSheet extends StatefulWidget {
+  final num total;
+
+  const _DummyStripePaymentSheet({required this.total});
+
+  @override
+  State<_DummyStripePaymentSheet> createState() => _DummyStripePaymentSheetState();
+}
+
+class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isProcessing = false;
+
+  Future<void> _pay() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isProcessing = true);
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    if (mounted) Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, keyboardInset + 16),
+      child: Material(
+        color: Daana.card,
+        borderRadius: BorderRadius.circular(22),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF635BFF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.payment, color: Colors.white),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Stripe test payment',
+                        style: Daana.sans(size: 17, weight: FontWeight.w700),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _isProcessing
+                            ? null
+                            : () => Navigator.of(context).pop(false),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Demo only — no money will be charged.',
+                    style: Daana.sans(size: 12, color: Daana.ink50),
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Card number'),
+                    validator: (value) {
+                      final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
+                      return digits.length >= 16 ? null : 'Enter a test card number';
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          keyboardType: TextInputType.datetime,
+                          decoration: const InputDecoration(labelText: 'MM / YY'),
+                          validator: (value) => (value ?? '').trim().length >= 5
+                              ? null
+                              : 'Required',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          obscureText: true,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'CVC'),
+                          validator: (value) => (value ?? '').trim().length >= 3
+                              ? null
+                              : 'Required',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF635BFF),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      onPressed: _isProcessing ? null : _pay,
+                      child: _isProcessing
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text('Pay Rs. ${widget.total.toStringAsFixed(0)}'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

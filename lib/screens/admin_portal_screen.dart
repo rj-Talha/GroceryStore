@@ -239,7 +239,14 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     });
 
     try {
-      await _firestoreService.updateOrderStatus(order.id, status);
+      await _firestoreService.updateOrderStatus(
+        order.id,
+        status,
+        paymentStatus:
+            order.paymentMethod == 'Cash on delivery' && status == 'delivered'
+            ? 'paid'
+            : null,
+      );
       if (!mounted) return;
       setState(() {
         _statusMessage = 'Order status updated.';
@@ -501,6 +508,11 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Status: ${_orderStatusLabel(order.status)}',
+                  style: Daana.sans(size: 13, color: Daana.ink70),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Payment: ${order.paymentMethod} • ${_paymentStatusLabel(order.paymentStatus)}',
                   style: Daana.sans(size: 13, color: Daana.ink70),
                 ),
               ],
@@ -774,27 +786,18 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                                             ),
                                           ),
                                         ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: _orderStatusColor(
-                                              order.status,
+                                        Wrap(
+                                          spacing: 6,
+                                          children: [
+                                            _OrderStatusChip(
+                                              label: _orderStatusLabel(order.status),
+                                              color: _orderStatusColor(order.status),
                                             ),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
+                                            _OrderStatusChip(
+                                              label: _paymentStatusLabel(order.paymentStatus),
+                                              color: _paymentStatusColor(order.paymentStatus),
                                             ),
-                                          ),
-                                          child: Text(
-                                            _orderStatusLabel(order.status),
-                                            style: Daana.sans(
-                                              size: 12,
-                                              color: Colors.white,
-                                              weight: FontWeight.w600,
-                                            ),
-                                          ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -924,6 +927,40 @@ String _orderStatusLabel(String status) {
       return 'Cancelled';
     default:
       return 'Processing';
+  }
+}
+
+Color _paymentStatusColor(String paymentStatus) {
+  return paymentStatus == 'paid' ? Daana.moss : Daana.saffron;
+}
+
+String _paymentStatusLabel(String paymentStatus) {
+  return paymentStatus == 'paid' ? 'Payment paid' : 'Payment pending';
+}
+
+class _OrderStatusChip extends StatelessWidget {
+  const _OrderStatusChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Daana.sans(
+          size: 12,
+          color: Colors.white,
+          weight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 
