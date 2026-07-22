@@ -91,16 +91,16 @@ class CatalogProvider extends ChangeNotifier {
         continue;
       }
 
-      if (suggestions.length >= 5) break;
+      if (suggestions.length >= 10) break;
       if (_allProducts.any((p) => p.key == entry.key)) {
         suggestions.add((product, 'Top ordered'));
       }
     }
 
-    if (suggestions.length < 5) {
+    if (suggestions.length < 10) {
       final fallback = _buildFallbackSuggestions();
       for (final item in fallback) {
-        if (suggestions.length >= 5) break;
+        if (suggestions.length >= 10) break;
         if (!suggestions.any((entry) => entry.$1.key == item.$1.key)) {
           suggestions.add(item);
         }
@@ -112,9 +112,9 @@ class CatalogProvider extends ChangeNotifier {
 
   List<(Product, String)> _buildFallbackSuggestions() {
     return mostSoldProducts
-        .take(5)
-        .map((p) => (p, 'Most sold this week'))
-        .toList();
+      .take(10)
+      .map((p) => (p, 'Most sold this week'))
+      .toList();
   }
 
   String itemNameForMissingProduct(String productId) {
@@ -142,14 +142,33 @@ class CatalogProvider extends ChangeNotifier {
   List<Product> get allProducts => List.unmodifiable(_allProducts);
   List<(Product, String)> get suggestions => List.unmodifiable(_suggestions);
 
-  List<Product> search(String query) {
-    if (query.isEmpty) return _allProducts;
-    
-    final lowerQuery = query.toLowerCase();
-    return _allProducts.where((p) {
-      return p.name.toLowerCase().contains(lowerQuery) ||
-             p.label.toLowerCase().contains(lowerQuery);
-    }).toList();
+  List<Product> search(String query, {String sort = 'popular'}) {
+    List<Product> results;
+    if (query.isEmpty) {
+      results = List<Product>.from(_allProducts);
+    } else {
+      final lowerQuery = query.toLowerCase();
+      results = _allProducts.where((p) {
+        return p.name.toLowerCase().contains(lowerQuery) ||
+            p.label.toLowerCase().contains(lowerQuery);
+      }).toList();
+    }
+
+    // Apply sorting
+    switch (sort) {
+      case 'price_asc':
+        results.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'price_desc':
+        results.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      case 'popular':
+      default:
+        results.sort((a, b) => b.salesCount.compareTo(a.salesCount));
+        break;
+    }
+
+    return results;
   }
 
   // Returns top 5 most sold products
