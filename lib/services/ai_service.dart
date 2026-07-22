@@ -13,6 +13,8 @@ class RecipeOption {
   final int need;
   final String blurb;
   final String tag;
+  final List<String> ingredients;
+  final List<String> instructions;
 
   RecipeOption({
     required this.name,
@@ -23,6 +25,8 @@ class RecipeOption {
     required this.need,
     required this.blurb,
     required this.tag,
+    required this.ingredients,
+    required this.instructions,
   });
 
   factory RecipeOption.fromJson(Map<String, dynamic> json) {
@@ -35,6 +39,14 @@ class RecipeOption {
       need: json['need'] as int? ?? 0,
       blurb: json['blurb'] as String? ?? '',
       tag: json['tag'] as String? ?? '',
+      ingredients: (json['ingredients'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      instructions: (json['instructions'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 }
@@ -45,7 +57,7 @@ class AIService {
 
   AIService() {
     _model = GenerativeModel(
-      model: 'gemini-3.5-flash',
+      model: 'gemini-3.5-flash-lite',
       apiKey: _apiKey.isEmpty ? 'MOCK_KEY' : _apiKey,
     );
   }
@@ -65,6 +77,14 @@ class AIService {
           need: 3,
           blurb: 'Bright, tomato-forward karahi finished with ginger.',
           tag: 'Best match',
+          ingredients: ['500g Chicken', '3 Tomatoes', '2 tbsp Ginger-Garlic paste', '4 Green Chilies', 'Spices'],
+          instructions: [
+            'Heat oil in a wok and fry the chicken until its color changes to golden brown.',
+            'Add the ginger-garlic paste and sauté for another 2 minutes.',
+            'Add chopped tomatoes and spices, then cover and cook on medium heat until tomatoes are soft.',
+            'Uncover and stir-fry on high heat until the oil separates.',
+            'Garnish with sliced green chilies and julienne ginger, and serve hot.'
+          ],
         ),
         RecipeOption(
           name: 'Murgh Cholay',
@@ -75,6 +95,14 @@ class AIService {
           need: 2,
           blurb: 'Slow chickpea curry with shredded chicken.',
           tag: '',
+          ingredients: ['250g Chicken', '1 cup Boiled chickpeas', '1 Onion', '1 Tomato', 'Spices'],
+          instructions: [
+            'Sauté finely chopped onions in oil until light golden brown.',
+            'Add chicken, ginger-garlic paste, and spices; fry well.',
+            'Stir in blended tomato and cook until the gravy thickens.',
+            'Add boiled chickpeas along with some water, cover and simmer for 15-20 minutes.',
+            'Garnish with fresh coriander and garam masala before serving.'
+          ],
         ),
         RecipeOption(
           name: 'Dahi Chicken',
@@ -85,6 +113,14 @@ class AIService {
           need: 2,
           blurb: 'Yogurt-tenderized chicken, almost-sweet sauce.',
           tag: '',
+          ingredients: ['500g Chicken', '1 cup Yogurt (Dahi)', '1 Onion', 'Spices'],
+          instructions: [
+            'Marinate chicken in yogurt and spices for at least 15 minutes.',
+            'Fry chopped onions in oil until soft and translucent.',
+            'Add marinated chicken and cook on medium-high heat until yogurt starts releasing water.',
+            'Cover and cook on low heat until chicken is tender and gravy is thick.',
+            'Serve garnished with green chilies and coriander.'
+          ],
         ),
       ];
     }
@@ -102,6 +138,8 @@ Format the response strictly as a JSON array of objects with the following keys:
 - "need": Integer number of additional main ingredients I need to buy
 - "blurb": A short 1-sentence appetizing description
 - "tag": A short tag for the top match like "Best match", empty string for others.
+- "ingredients": A JSON array of strings representing the ingredients needed.
+- "instructions": A JSON array of strings representing the step-by-step cooking guide.
 
 Output raw JSON array only, no markdown blocks.
 ''';

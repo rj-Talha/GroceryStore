@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
 import '../services/ai_service.dart';
 import '../theme/tokens.dart';
-import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
 import '../widgets/home_app_bar.dart';
-import '../widgets/price.dart';
-import '../widgets/product_placeholder.dart';
 
 class AIRecipeScreen extends StatefulWidget {
   const AIRecipeScreen({super.key});
@@ -343,15 +338,6 @@ class _RecipeCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: ProductPlaceholder(
-                  label: '${recipe.name.toLowerCase()} — plated',
-                  tone: 'c',
-                  radius: 0,
-                  square: false,
-                ),
-              ),
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -378,6 +364,62 @@ class _RecipeCard extends StatelessWidget {
                         _meta('Need', '${recipe.need} items'),
                       ],
                     ),
+                    if (recipe.ingredients.isNotEmpty) ...[
+                      Divider(height: 32, color: Daana.hairlineSoft),
+                      const Eyebrow('Ingredients'),
+                      const SizedBox(height: 12),
+                      ...recipe.ingredients.map((ing) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('• ', style: Daana.sans(size: 14, color: Daana.ink50)),
+                                Expanded(
+                                  child: Text(ing,
+                                      style: Daana.sans(size: 14, color: Daana.ink)),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+                    if (recipe.instructions.isNotEmpty) ...[
+                      Divider(height: 32, color: Daana.hairlineSoft),
+                      const Eyebrow('Cooking Guide'),
+                      const SizedBox(height: 12),
+                      ...recipe.instructions.asMap().entries.map((entry) {
+                        final index = entry.key + 1;
+                        final step = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  color: Daana.ink08,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '$index',
+                                    style: Daana.mono(size: 11, color: Daana.ink),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  step,
+                                  style: Daana.sans(size: 14, color: Daana.ink70, height: 1.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
                   ],
                 ),
               ),
