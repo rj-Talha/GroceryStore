@@ -54,6 +54,11 @@ class _SearchScreenState extends State<SearchScreen> {
     final catalog = context.watch<CatalogProvider>();
     final cart = context.read<CartProvider>();
     final results = catalog.search(q);
+    final width = MediaQuery.of(context).size.width;
+    
+    final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
+    
+    final childAspectRatio = width >= 1200 ? 0.75 : (width >= 800 ? 0.80 : 0.68);
 
     return Scaffold(
       backgroundColor: Daana.bg,
@@ -76,11 +81,11 @@ class _SearchScreenState extends State<SearchScreen> {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 0.68,
+                  childAspectRatio: childAspectRatio,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (_, i) => ProductCard(

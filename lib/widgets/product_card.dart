@@ -75,6 +75,15 @@ class ProductCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if ((product.quantity ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Quantity: ${product.quantity!.trim()}',
+                style: Daana.sans(size: 11.2, color: Daana.ink50),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
             const SizedBox(height: 2),
             Text(
               subtitle ?? product.unit,
