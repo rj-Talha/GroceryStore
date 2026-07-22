@@ -53,7 +53,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final catalog = context.watch<CatalogProvider>();
     final cart = context.read<CartProvider>();
-    final results = catalog.search(q);
+    final results = catalog.search(q, sort: sort);
     final width = MediaQuery.of(context).size.width;
     
     final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
@@ -65,12 +65,13 @@ class _SearchScreenState extends State<SearchScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: _AppBar(
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _AppBarHeader(
                 controller: _searchController,
                 onBack: () => Navigator.pop(context),
                 onChanged: (val) => setState(() => q = val),
-              )
+              ),
             ),
             if (q.isNotEmpty) SliverToBoxAdapter(child: _Breadcrumb(q: q)),
             SliverToBoxAdapter(child: _Header(q: q, count: results.length)),
@@ -102,7 +103,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(child: _FiltersBlock(filters: _filters)),
+            // Filters removed per request
           ],
         ),
       ),
@@ -162,6 +163,37 @@ class _AppBar extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _AppBarHeader extends SliverPersistentHeaderDelegate {
+  final TextEditingController controller;
+  final VoidCallback onBack;
+  final ValueChanged<String> onChanged;
+  final double height;
+
+  _AppBarHeader({required this.controller, required this.onBack, required this.onChanged, this.height = 68});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox(
+      height: height,
+      child: Material(
+        color: Daana.bg,
+        child: _AppBar(controller: controller, onBack: onBack, onChanged: onChanged),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _AppBarHeader oldDelegate) {
+    return oldDelegate.controller != controller || oldDelegate.height != height;
   }
 }
 
@@ -261,11 +293,26 @@ class _SortRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: Daana.hairlineSoft),
             ),
-            child: Row(
+                child: Row(
               children: [
                 pill('popular', 'Popular'),
-                pill('price', 'Price'),
-                pill('fresh', 'Freshest'),
+                // Price pill toggles between price_asc and price_desc
+                GestureDetector(
+                  onTap: () => onChange(sort == 'price_asc' ? 'price_desc' : 'price_asc'),
+                  child: Container(
+                    height: 32,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: sort.startsWith('price') ? Daana.ink : Colors.transparent,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      sort == 'price_desc' ? 'Price ↓' : 'Price ↑',
+                      style: Daana.sans(size: 13, color: sort.startsWith('price') ? Daana.bg : Daana.ink70),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
