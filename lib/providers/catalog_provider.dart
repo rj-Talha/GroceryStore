@@ -91,16 +91,16 @@ class CatalogProvider extends ChangeNotifier {
         continue;
       }
 
-      if (suggestions.length >= 5) break;
+      if (suggestions.length >= 10) break;
       if (_allProducts.any((p) => p.key == entry.key)) {
         suggestions.add((product, 'Top ordered'));
       }
     }
 
-    if (suggestions.length < 5) {
+    if (suggestions.length < 10) {
       final fallback = _buildFallbackSuggestions();
       for (final item in fallback) {
-        if (suggestions.length >= 5) break;
+        if (suggestions.length >= 10) break;
         if (!suggestions.any((entry) => entry.$1.key == item.$1.key)) {
           suggestions.add(item);
         }
@@ -112,9 +112,9 @@ class CatalogProvider extends ChangeNotifier {
 
   List<(Product, String)> _buildFallbackSuggestions() {
     return mostSoldProducts
-        .take(5)
-        .map((p) => (p, 'Most sold this week'))
-        .toList();
+      .take(10)
+      .map((p) => (p, 'Most sold this week'))
+      .toList();
   }
 
   String itemNameForMissingProduct(String productId) {

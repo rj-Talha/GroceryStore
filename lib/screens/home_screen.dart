@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -852,8 +853,21 @@ class _AITile extends StatelessWidget {
   }
 }
 
-class _SuggestionsSection extends StatelessWidget {
+class _SuggestionsSection extends StatefulWidget {
   const _SuggestionsSection();
+
+  @override
+  State<_SuggestionsSection> createState() => _SuggestionsSectionState();
+}
+
+class _SuggestionsSectionState extends State<_SuggestionsSection> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -879,39 +893,58 @@ class _SuggestionsSection extends StatelessWidget {
         ),
         SizedBox(
           height: 300,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: recs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final (p, reason) = recs[i];
-              return SizedBox(
-                width: 168,
-                child: ProductCard(
-                  product: p,
-                  subtitle: p.quantity?.trim().isNotEmpty == true
-                      ? p.quantity!.trim()
-                      : p.unit,
-                  reason: reason,
-                  compact: true,
-                  onAdd: () {},
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProductDetailScreen(product: p),
-                    ),
-                  ),
-                ),
-              );
+          child: Listener(
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                if (_controller.hasClients) {
+                  final newOffset = (_controller.offset + event.scrollDelta.dy)
+                      .clamp(0.0, _controller.position.maxScrollExtent);
+                  _controller.jumpTo(newOffset);
+                }
+              }
             },
+            
+            child: RawScrollbar(
+              thumbVisibility: true,
+              thickness: 15,
+              radius: const Radius.circular(8),
+              minThumbLength: 56,
+              controller: _controller,
+              child: ListView.separated(
+                controller: _controller,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: recs.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final (p, reason) = recs[i];
+                  return SizedBox(
+                    width: 168,
+                    child: ProductCard(
+                      product: p,
+                      subtitle: p.quantity?.trim().isNotEmpty == true
+                          ? p.quantity!.trim()
+                          : p.unit,
+                      reason: reason,
+                      compact: true,
+                      onAdd: () {},
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailScreen(product: p),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 }
-
 class _AllProductsSection extends StatelessWidget {
   const _AllProductsSection();
 
