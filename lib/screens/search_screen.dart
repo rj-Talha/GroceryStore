@@ -58,7 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
     
     final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
     
-    final childAspectRatio = width >= 1200 ? 0.75 : (width >= 800 ? 0.80 : 0.68);
+    final childAspectRatio = width >= 1200 ? 0.75 : (width >= 800 ? 0.80 : 0.62);
 
     return Scaffold(
       backgroundColor: Daana.bg,

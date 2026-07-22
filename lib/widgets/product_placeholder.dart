@@ -44,10 +44,14 @@ class ProductPlaceholder extends StatelessWidget {
                   ),
                 ),
               if (imageUrl != null && imageUrl!.isNotEmpty)
-                Image.network(
-                  imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                Positioned.fill(
+                  child: Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                  ),
                 ),
             ],
           ),
