@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
 import '../services/firestore_service.dart';
+import '../services/whatsapp_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/eyebrow.dart';
@@ -163,10 +164,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         };
                       }).toList();
 
+                      final customerName =
+                          '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+                              .trim();
+
                       await _firestoreService.addOrder({
-                        'customerName':
-                            '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
-                                .trim(),
+                        'customerName': customerName,
                         'phone': _phoneController.text.trim(),
                         'email': _emailController.text.trim(),
                         'address': _addressController.text.trim(),
@@ -184,13 +187,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       });
                       await _firestoreService.updateStockAfterOrder(orderItems);
 
+                      final whatsappResult =
+                          await WhatsAppService.sendOrderConfirmation(
+                            phoneNumber: _phoneController.text.trim(),
+                            customerName: customerName,
+                            total: cartProvider.total,
+                            apiKey: WhatsAppService.apiKey,
+                            accountSid: WhatsAppService.accountSid,
+                            fromNumber: WhatsAppService.fromNumber,
+                          );
+
                       if (!mounted) return;
                       cartProvider.clearCart();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Order placed successfully!'),
+                        SnackBar(
+                          content: Text(
+                            whatsappResult.success
+                                ? 'Order placed successfully! WhatsApp confirmation sent.'
+                                : 'Order placed successfully! WhatsApp confirmation could not be sent. (${whatsappResult.statusCode ?? 'no status'})',
+                          ),
                         ),
                       );
+                      if (!whatsappResult.success) {
+                        // Log the Twilio response body for debugging.
+                        // Check the terminal output to see the exact Twilio error.
+                        // ignore: avoid_print
+                        print('WhatsApp send failed: ${whatsappResult.body}');
+                      }
                       Navigator.of(context).maybePop();
                     } catch (_) {
                       if (!mounted) return;
