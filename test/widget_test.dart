@@ -1,16 +1,27 @@
 import 'package:daana/data/products.dart';
+import 'package:daana/firebase_options.dart';
 import 'package:daana/providers/cart_provider.dart';
 import 'package:daana/providers/catalog_provider.dart';
 import 'package:daana/screens/checkout_screen.dart';
 import 'package:daana/screens/home_screen.dart';
 import 'package:daana/services/ai_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  });
+
   testWidgets('checkout screen shows all required fields', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: CheckoutScreen()));
+    await tester.pumpAndSettle();
 
     expect(find.text('Checkout'), findsOneWidget);
     expect(find.text('First name'), findsOneWidget);
@@ -21,6 +32,43 @@ void main() {
     expect(find.text('Payment method'), findsOneWidget);
     expect(find.text('Cash on delivery'), findsOneWidget);
   });
+
+  testWidgets('checkout shows phone validation error for invalid number', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: CheckoutScreen()));
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Ali');
+    await tester.enterText(find.byType(TextFormField).at(1), 'Khan');
+    await tester.enterText(find.byType(TextFormField).at(2), '123456');
+    await tester.enterText(find.byType(TextFormField).at(4), 'House 1');
+    await tester.tap(find.text('Place order'));
+    await tester.pump();
+
+    expect(find.text('Enter a valid phone number'), findsOneWidget);
+  });
+
+  testWidgets(
+    'checkout shows expiry validation error for invalid month or year',
+    (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: CheckoutScreen()));
+
+      await tester.tap(find.text('Online payment'));
+      await tester.tap(find.text('Place order'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byType(TextFormField).at(0),
+        '4242424242424242',
+      );
+      await tester.enterText(find.byType(TextFormField).at(1), '13/99');
+      await tester.enterText(find.byType(TextFormField).at(2), '123');
+      await tester.tap(find.text('Pay Rs. 0'));
+      await tester.pump();
+
+      expect(find.text('Enter a valid month/year'), findsOneWidget);
+    },
+  );
 
   testWidgets('home screen shows AI chatbot FAQ button', (tester) async {
     await tester.pumpWidget(

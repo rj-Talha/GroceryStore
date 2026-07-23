@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
@@ -77,9 +78,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   label: 'Phone number',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  validator: (value) => value == null || value.trim().length < 8
-                      ? 'Required'
-                      : null,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
+                  validator: (value) {
+                    final phone = (value ?? '').trim();
+                    if (phone.isEmpty) {
+                      return 'Required';
+                    }
+                    if (!RegExp(r'^03\d{9}$').hasMatch(phone)) {
+                      return 'Enter a valid phone number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 14),
                 _buildTextField(
@@ -132,9 +144,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     }
 
                     if (_paymentMethod == 'Online payment') {
-                      final paymentCompleted = await _showDummyStripePaymentSheet(
-                        cartProvider.total,
-                      );
+                      final paymentCompleted =
+                          await _showDummyStripePaymentSheet(
+                            cartProvider.total,
+                          );
                       if (!paymentCompleted || !mounted) return;
                     }
 
@@ -158,8 +171,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         'email': _emailController.text.trim(),
                         'address': _addressController.text.trim(),
                         'paymentMethod': _paymentMethod,
-                        'paymentStatus':
-                            _paymentMethod == 'Online payment' ? 'paid' : 'pending',
+                        'paymentStatus': _paymentMethod == 'Online payment'
+                            ? 'paid'
+                            : 'pending',
                         'status': 'processing',
                         'subtotal': cartProvider.subtotal,
                         'deliveryFee': cartProvider.deliveryFee,
@@ -212,6 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required TextEditingController controller,
     TextInputType? keyboardType,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -223,6 +238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          inputFormatters: inputFormatters,
           validator: validator,
           decoration: InputDecoration(
             filled: true,
@@ -303,13 +319,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
+class _ExpiryDateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    String formatted = digits;
+
+    if (digits.length > 2) {
+      formatted = '${digits.substring(0, 2)}/${digits.substring(2)}';
+    } else if (digits.length == 2) {
+      formatted = '$digits/';
+    }
+
+    if (formatted.length > 5) {
+      formatted = formatted.substring(0, 5);
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
 class _DummyStripePaymentSheet extends StatefulWidget {
   final num total;
 
   const _DummyStripePaymentSheet({required this.total});
 
   @override
-  State<_DummyStripePaymentSheet> createState() => _DummyStripePaymentSheetState();
+  State<_DummyStripePaymentSheet> createState() =>
+      _DummyStripePaymentSheetState();
 }
 
 class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
@@ -375,10 +418,16 @@ class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
                   const SizedBox(height: 20),
                   TextFormField(
                     keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(labelText: 'Card number'),
                     validator: (value) {
-                      final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
-                      return digits.length >= 16 ? null : 'Enter a test card number';
+                      final digits = (value ?? '').replaceAll(
+                        RegExp(r'\D'),
+                        '',
+                      );
+                      return digits.length >= 16
+                          ? null
+                          : 'Enter a test card number';
                     },
                   ),
                   const SizedBox(height: 12),
@@ -387,10 +436,40 @@ class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
                       Expanded(
                         child: TextFormField(
                           keyboardType: TextInputType.datetime,
-                          decoration: const InputDecoration(labelText: 'MM / YY'),
-                          validator: (value) => (value ?? '').trim().length >= 5
-                              ? null
-                              : 'Required',
+                          inputFormatters: [_ExpiryDateInputFormatter()],
+                          decoration: const InputDecoration(
+                            labelText: 'MM / YY',
+                          ),
+                          validator: (value) {
+                            final raw = (value ?? '')
+                                .replaceAll('/', '')
+                                .trim();
+                            if (raw.length != 4) {
+                              return 'Required';
+                            }
+
+                            final month = int.tryParse(raw.substring(0, 2));
+                            final year = int.tryParse(raw.substring(2));
+                            if (month == null ||
+                                year == null ||
+                                month < 1 ||
+                                month > 12) {
+                              return 'Enter a valid month/year';
+                            }
+
+                            final currentYear = DateTime.now().year % 100;
+                            final currentMonth = DateTime.now().month;
+                            final expiryYear = year;
+                            final expiryMonth = month;
+
+                            if (expiryYear < currentYear ||
+                                (expiryYear == currentYear &&
+                                    expiryMonth < currentMonth)) {
+                              return 'Enter a valid month/year';
+                            }
+
+                            return null;
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
