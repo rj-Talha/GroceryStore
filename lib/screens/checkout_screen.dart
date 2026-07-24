@@ -24,6 +24,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
+  final _locationController = TextEditingController();
   String _paymentMethod = 'Cash on delivery';
 
   @override
@@ -33,6 +34,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _addressController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -64,15 +66,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 _buildTextField(
                   label: 'First name',
                   controller: _firstNameController,
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Required' : null,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                  ],
+                  validator: validateAlphabeticName,
                 ),
                 const SizedBox(height: 14),
                 _buildTextField(
                   label: 'Last name',
                   controller: _lastNameController,
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Required' : null,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                  ],
+                  validator: validateAlphabeticName,
                 ),
                 const SizedBox(height: 14),
                 _buildTextField(
@@ -106,6 +112,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   label: 'Address',
                   controller: _addressController,
                   maxLines: 3,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 14),
+                _buildTextField(
+                  label: 'Location',
+                  controller: _locationController,
                   validator: (value) =>
                       value == null || value.trim().isEmpty ? 'Required' : null,
                 ),
@@ -173,6 +186,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         'phone': _phoneController.text.trim(),
                         'email': _emailController.text.trim(),
                         'address': _addressController.text.trim(),
+                        'location': _locationController.text.trim(),
                         'paymentMethod': _paymentMethod,
                         'paymentStatus': _paymentMethod == 'Online payment'
                             ? 'paid'
@@ -343,6 +357,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
+String? validateAlphabeticName(String? value) {
+  final trimmed = (value ?? '').trim();
+  if (trimmed.isEmpty) {
+    return 'Required';
+  }
+  return RegExp(r'^[A-Za-z]+$').hasMatch(trimmed)
+      ? null
+      : 'Only letters are allowed';
+}
+
+String? validateExpiryDate(String? value) {
+  final raw = (value ?? '').replaceAll('/', '').trim();
+  if (raw.length != 4) {
+    return 'Required';
+  }
+
+  final month = int.tryParse(raw.substring(0, 2));
+  final year = int.tryParse(raw.substring(2));
+  if (month == null || year == null || month < 1 || month > 12) {
+    return 'Enter a valid month/year';
+  }
+
+  if (year < 26 || year > 32) {
+    return 'Enter a valid month/year';
+  }
+
+  return null;
+}
+
+String? validateCardNumber(String? value) {
+  final digits = (value ?? '').replaceAll(RegExp(r'\D'), '').trim();
+  return digits.length == 16 ? null : 'Enter a valid card number';
+}
+
+class _CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length > 16) {
+      return oldValue;
+    }
+
+    final buffered = <String>[];
+    for (var i = 0; i < digits.length; i += 4) {
+      final end = i + 4;
+      buffered.add(
+        digits.substring(i, end < digits.length ? end : digits.length),
+      );
+    }
+
+    final formatted = buffered.join('-');
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
 class _ExpiryDateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -442,17 +517,9 @@ class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
                   const SizedBox(height: 20),
                   TextFormField(
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [_CardNumberInputFormatter()],
                     decoration: const InputDecoration(labelText: 'Card number'),
-                    validator: (value) {
-                      final digits = (value ?? '').replaceAll(
-                        RegExp(r'\D'),
-                        '',
-                      );
-                      return digits.length >= 16
-                          ? null
-                          : 'Enter a test card number';
-                    },
+                    validator: validateCardNumber,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -464,36 +531,7 @@ class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
                           decoration: const InputDecoration(
                             labelText: 'MM / YY',
                           ),
-                          validator: (value) {
-                            final raw = (value ?? '')
-                                .replaceAll('/', '')
-                                .trim();
-                            if (raw.length != 4) {
-                              return 'Required';
-                            }
-
-                            final month = int.tryParse(raw.substring(0, 2));
-                            final year = int.tryParse(raw.substring(2));
-                            if (month == null ||
-                                year == null ||
-                                month < 1 ||
-                                month > 12) {
-                              return 'Enter a valid month/year';
-                            }
-
-                            final currentYear = DateTime.now().year % 100;
-                            final currentMonth = DateTime.now().month;
-                            final expiryYear = year;
-                            final expiryMonth = month;
-
-                            if (expiryYear < currentYear ||
-                                (expiryYear == currentYear &&
-                                    expiryMonth < currentMonth)) {
-                              return 'Enter a valid month/year';
-                            }
-
-                            return null;
-                          },
+                          validator: validateExpiryDate,
                         ),
                       ),
                       const SizedBox(width: 12),
