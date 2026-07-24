@@ -192,6 +192,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             phoneNumber: _phoneController.text.trim(),
                             customerName: customerName,
                             total: cartProvider.total,
+                            items: orderItems,
                             apiKey: WhatsAppService.apiKey,
                             accountSid: WhatsAppService.accountSid,
                             fromNumber: WhatsAppService.fromNumber,

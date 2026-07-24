@@ -33,14 +33,22 @@ class WhatsAppService {
   static String buildConfirmationMessage({
     required String customerName,
     required num total,
+    required List<Map<String, dynamic>> items,
   }) {
-    return 'Order confirmed for $customerName. Your order total is PKR $total. Thank you for shopping with Daana!';
+    final itemLines = items.map((item) {
+      final quantity = item['quantity'] ?? 0;
+      final name = item['productName'] ?? 'item';
+      return '$quantity x $name';
+    }).join(', ');
+
+    return 'Order confirmed for $customerName. Items: $itemLines. Total: PKR $total. Thank you for shopping with SmartGroceryStore!';
   }
 
   static Future<WhatsAppSendResult> sendOrderConfirmation({
     required String phoneNumber,
     required String customerName,
     required num total,
+    required List<Map<String, dynamic>> items,
     required String apiKey,
     required String accountSid,
     required String fromNumber,
@@ -58,6 +66,7 @@ class WhatsAppService {
     final message = buildConfirmationMessage(
       customerName: customerName,
       total: total,
+      items: items,
     );
 
     final uri = Uri.parse('$_defaultApiUrl/$accountSid/Messages.json');
