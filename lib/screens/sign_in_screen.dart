@@ -42,6 +42,89 @@ class _SignInScreenState extends State<SignInScreen> {
     _formKey.currentState?.reset();
   }
 
+  bool _isValidEmail(String email) {
+    final regex = RegExp(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$");
+    return regex.hasMatch(email);
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() {
+        _statusMessage = 'Please enter your email address first.';
+        _statusMessageColor = Colors.red.shade700;
+      });
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      setState(() {
+        _statusMessage = 'Please enter a valid email address.';
+        _statusMessageColor = Colors.red.shade700;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _statusMessage = null;
+      _statusMessageColor = null;
+    });
+
+    try {
+      final auth = FirebaseAuth.instance;
+      await auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'A password reset link has been sent to your email.';
+        _statusMessageColor = Daana.moss;
+      });
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      switch (error.code) {
+        case 'invalid-email':
+          setState(() {
+            _statusMessage = 'Please enter a valid email address.';
+            _statusMessageColor = Colors.red.shade700;
+          });
+          break;
+        case 'user-not-found':
+          setState(() {
+            _statusMessage = 'No account found with this email address.';
+            _statusMessageColor = Colors.red.shade700;
+          });
+          break;
+        case 'too-many-requests':
+          setState(() {
+            _statusMessage = 'Too many requests. Please try again later.';
+            _statusMessageColor = Colors.red.shade700;
+          });
+          break;
+        case 'network-request-failed':
+          setState(() {
+            _statusMessage = 'Please check your internet connection and try again.';
+            _statusMessageColor = Colors.red.shade700;
+          });
+          break;
+        default:
+          setState(() {
+            _statusMessage = error.message ?? 'Unable to send password reset email.';
+            _statusMessageColor = Colors.red.shade700;
+          });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Something went wrong. Please try again.';
+        _statusMessageColor = Colors.red.shade700;
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -217,7 +300,24 @@ class _SignInScreenState extends State<SignInScreen> {
                                       return null;
                                     },
                                   ),
-                                  const SizedBox(height: 20),
+                                  const SizedBox(height: 8),
+                                  if (!_isRegistering)
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: TextButton(
+                                        onPressed: _isLoading ? null : _resetPassword,
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Text(
+                                          'Forgot password?',
+                                          style: Daana.sans(size: 13, color: Daana.ink70),
+                                        ),
+                                      ),
+                                    ),
+                                  const SizedBox(height: 12),
                                   if (_statusMessage != null) ...[
                                     Text(
                                       _statusMessage!,
