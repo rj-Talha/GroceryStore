@@ -103,6 +103,17 @@ class _SignInScreenState extends State<SignInScreen> {
     });
   }
 
+  void _dismissAuthSheet() {
+    if (widget.onClose != null) {
+      widget.onClose!();
+      return;
+    }
+
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -252,6 +263,9 @@ class _SignInScreenState extends State<SignInScreen> {
           email: email,
           password: password,
         );
+
+        if (!mounted) return;
+        _dismissAuthSheet();
       }
     } on FirebaseAuthException catch (error) {
       setState(() {

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -442,63 +443,96 @@ class _AddressBar extends StatefulWidget {
 }
 
 class _AddressBarState extends State<_AddressBar> {
+  String? _displayLabel(User? user) {
+    final displayName = (user?.displayName ?? '').trim();
+    if (displayName.isNotEmpty) {
+      return displayName;
+    }
+
+    final email = (user?.email ?? '').trim();
+    if (email.isNotEmpty) {
+      return email.split('@').first;
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
-                const SizedBox(height: 4),
-                Row(
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        final label = _displayLabel(snapshot.data);
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DaanaIcon('pin', size: 15, color: Daana.moss),
-                    const SizedBox(width: 6),
-                    Text('DHA Phase VI', style: Daana.sans(size: 15)),
-                    const SizedBox(width: 4),
-                    DaanaIcon('chevD', size: 14, color: Daana.ink50),
+                    const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        DaanaIcon('pin', size: 15, color: Daana.moss),
+                        const SizedBox(width: 6),
+                        Text('DHA Phase VI', style: Daana.sans(size: 15)),
+                        const SizedBox(width: 4),
+                        DaanaIcon('chevD', size: 14, color: Daana.ink50),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  PageRouteBuilder(
-                    opaque: false,
-                    barrierDismissible: true,
-                    barrierColor: Colors.transparent,
-                    pageBuilder: (routeContext, animation, secondaryAnimation) {
-                      return SignInScreen(
-                        onClose: () => Navigator.of(routeContext).pop(),
-                      );
-                    },
-                  ),
-                );
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Daana.card,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Daana.hairlineSoft),
-                ),
-                child: const Center(child: DaanaIcon('user', size: 17)),
               ),
-            ),
+              const SizedBox(width: 8),
+              if (label != null) ...[
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      'Hi, $label',
+                      style: Daana.sans(size: 12, color: Daana.ink70),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      PageRouteBuilder(
+                        opaque: false,
+                        barrierDismissible: true,
+                        barrierColor: Colors.transparent,
+                        pageBuilder: (routeContext, animation, secondaryAnimation) {
+                          return SignInScreen(
+                            onClose: () => Navigator.of(routeContext).pop(),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Daana.card,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Daana.hairlineSoft),
+                    ),
+                    child: const Center(child: DaanaIcon('user', size: 17)),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
