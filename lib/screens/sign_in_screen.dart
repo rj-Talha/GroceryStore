@@ -230,12 +230,42 @@ class _SignInScreenState extends State<SignInScreen> {
                                   ],
                                   ElevatedButton(
                                     onPressed: _isLoading ? null : _submit,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Daana.ink,
-                                      foregroundColor: Daana.bg,
-                                      minimumSize: const Size.fromHeight(52),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                                    style: ButtonStyle(
+                                      minimumSize: WidgetStateProperty.all(
+                                        const Size.fromHeight(52),
+                                      ),
+                                      shape: WidgetStateProperty.all(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                      ),
+                                      backgroundColor: WidgetStateProperty.resolveWith(
+                                        (states) {
+                                          if (states.contains(WidgetState.disabled)) {
+                                            return Daana.ink.withValues(alpha: 89);
+                                          }
+                                          if (states.contains(WidgetState.hovered) ||
+                                              states.contains(WidgetState.focused)) {
+                                            return Daana.bg;
+                                          }
+                                          return Daana.ink;
+                                        },
+                                      ),
+                                      foregroundColor: WidgetStateProperty.resolveWith(
+                                        (states) {
+                                          if (states.contains(WidgetState.disabled)) {
+                                            return Colors.white.withValues(alpha: 166);
+                                          }
+                                          if (states.contains(WidgetState.hovered) ||
+                                              states.contains(WidgetState.focused)) {
+                                            return Daana.ink;
+                                          }
+                                          return Colors.white;
+                                        },
+                                      ),
+                                      textStyle: WidgetStateProperty.all(
+                                        Daana.sans(size: 16, weight: FontWeight.w600)
+                                            .copyWith(color: null),
                                       ),
                                     ),
                                     child: _isLoading
@@ -247,7 +277,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                               strokeWidth: 2,
                                             ),
                                           )
-                                        : Text(actionText, style: Daana.sans(size: 16, weight: FontWeight.w600)),
+                                        : Text(actionText),
                                   ),
                                   const SizedBox(height: 16),
                                   TextButton(
