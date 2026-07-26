@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/tokens.dart';
 import 'admin_portal_screen.dart';
+import 'location_picker_sheet.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, this.onClose});
@@ -15,6 +17,11 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -26,12 +33,22 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _locationController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _resetForm({bool clearStatus = true}) {
+    _firstNameController.clear();
+    _lastNameController.clear();
+    _phoneController.clear();
+    _addressController.clear();
+    _locationController.clear();
     _emailController.clear();
     _passwordController.clear();
     _showPassword = false;
@@ -45,6 +62,45 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isValidEmail(String email) {
     final regex = RegExp(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$");
     return regex.hasMatch(email);
+  }
+
+  String? _validateAlphabeticName(String? value) {
+    final name = (value ?? '').trim();
+    if (name.isEmpty) {
+      return 'Required';
+    }
+    if (!RegExp(r'^[A-Za-z]+(?: [A-Za-z]+)*$').hasMatch(name)) {
+      return 'Use letters only';
+    }
+    return null;
+  }
+
+  String? _validatePhoneNumber(String? value) {
+    final phone = (value ?? '').trim();
+    if (phone.isEmpty) {
+      return 'Required';
+    }
+    if (!RegExp(r'^03\d{9}$').hasMatch(phone)) {
+      return 'Enter a valid phone number';
+    }
+    return null;
+  }
+
+  Future<void> _openLocationPicker() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LocationPickerSheet(),
+    );
+
+    if (!mounted || selected == null || selected.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _locationController.text = selected.trim();
+    });
   }
 
   Future<void> _resetPassword() async {
@@ -152,11 +208,20 @@ class _SignInScreenState extends State<SignInScreen> {
           );
         }
 
+        final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
+        await user.updateDisplayName(fullName.isEmpty ? null : fullName);
+
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
           {
             'email': user.email,
+            'firstName': _firstNameController.text.trim(),
+            'lastName': _lastNameController.text.trim(),
+            'phone': _phoneController.text.trim(),
+            'address': _addressController.text.trim(),
+            'location': _locationController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           },
+          SetOptions(merge: true),
         );
 
         await auth.signOut();
@@ -264,6 +329,60 @@ class _SignInScreenState extends State<SignInScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
+                                  if (_isRegistering) ...[
+                                    _buildField(
+                                      label: 'First name',
+                                      controller: _firstNameController,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                                      ],
+                                      validator: _validateAlphabeticName,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildField(
+                                      label: 'Last name',
+                                      controller: _lastNameController,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                                      ],
+                                      validator: _validateAlphabeticName,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildField(
+                                      label: 'Phone number',
+                                      controller: _phoneController,
+                                      keyboardType: TextInputType.phone,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(11),
+                                      ],
+                                      validator: _validatePhoneNumber,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildField(
+                                      label: 'Address',
+                                      controller: _addressController,
+                                      maxLines: 3,
+                                      validator: (value) =>
+                                          value == null || value.trim().isEmpty ? 'Required' : null,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GestureDetector(
+                                      onTap: _openLocationPicker,
+                                      child: AbsorbPointer(
+                                        child: _buildField(
+                                          label: 'Location',
+                                          controller: _locationController,
+                                          readOnly: true,
+                                          suffixIcon: const Icon(Icons.map_outlined),
+                                          hintText: 'Tap to pick your address on the map',
+                                          validator: (value) =>
+                                              value == null || value.trim().isEmpty ? 'Required' : null,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
                                   _buildField(
                                     label: 'Email',
                                     controller: _emailController,
@@ -425,7 +544,12 @@ class _SignInScreenState extends State<SignInScreen> {
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
+    bool readOnly = false,
     Widget? suffixIcon,
+    List<TextInputFormatter>? inputFormatters,
+    int maxLines = 1,
+    String? hintText,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,11 +566,16 @@ class _SignInScreenState extends State<SignInScreen> {
             controller: controller,
             keyboardType: keyboardType,
             obscureText: obscureText,
+            readOnly: readOnly,
             validator: validator,
+            inputFormatters: inputFormatters,
+            maxLines: maxLines,
+            onTap: onTap,
             style: Daana.sans(size: 15),
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
+              hintText: hintText,
               suffixIcon: suffixIcon,
             ),
           ),
