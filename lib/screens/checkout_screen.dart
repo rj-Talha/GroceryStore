@@ -8,6 +8,7 @@ import '../services/whatsapp_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/eyebrow.dart';
+import 'location_picker_sheet.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -116,11 +117,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       value == null || value.trim().isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 14),
-                _buildTextField(
-                  label: 'Location',
-                  controller: _locationController,
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Required' : null,
+                GestureDetector(
+                  onTap: _openLocationPicker,
+                  child: AbsorbPointer(
+                    child: _buildTextField(
+                      label: 'Location',
+                      controller: _locationController,
+                      readOnly: true,
+                      suffixIcon: const Icon(Icons.map_outlined),
+                      hintText: 'Tap to pick your address on the map',
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty ? 'Required' : null,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -150,8 +159,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     }
 
                     final cartProvider = context.read<CartProvider>();
+                    final currentContext = context;
                     if (cartProvider.items.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(currentContext).showSnackBar(
                         const SnackBar(content: Text('Your cart is empty.')),
                       );
                       return;
@@ -214,7 +225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                       if (!mounted) return;
                       cartProvider.clearCart();
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(currentContext).showSnackBar(
                         SnackBar(
                           content: Text(
                             whatsappResult.success
@@ -232,7 +243,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       Navigator.of(context).maybePop();
                     } catch (_) {
                       if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(currentContext).showSnackBar(
                         const SnackBar(
                           content: Text('Unable to place order right now.'),
                         ),
@@ -259,6 +270,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return result ?? false;
   }
 
+  Future<void> _openLocationPicker() async {
+    final currentContext = context;
+    if (!mounted) return;
+
+    final selected = await showModalBottomSheet<String>(
+      context: currentContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const LocationPickerSheet(),
+    );
+
+    if (!mounted || selected == null || selected.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _locationController.text = selected.trim();
+    });
+  }
+
   Widget _buildTextField({
     required String label,
     required TextEditingController controller,
@@ -266,6 +297,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     int maxLines = 1,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    String? hintText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,9 +310,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           controller: controller,
           keyboardType: keyboardType,
           maxLines: maxLines,
+          readOnly: readOnly,
           inputFormatters: inputFormatters,
           validator: validator,
           decoration: InputDecoration(
+            hintText: hintText,
             filled: true,
             fillColor: Daana.card,
             border: OutlineInputBorder(
@@ -297,6 +333,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               horizontal: 14,
               vertical: 12,
             ),
+            suffixIcon: suffixIcon,
           ),
         ),
       ],

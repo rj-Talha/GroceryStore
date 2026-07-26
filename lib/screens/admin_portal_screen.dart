@@ -460,6 +460,30 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                       : '${order.email} • ${order.phone}',
                   style: Daana.sans(size: 12, color: Daana.ink70),
                 ),
+                if (order.address.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Address',
+                    style: Daana.sans(size: 13, weight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    order.address,
+                    style: Daana.sans(size: 12, color: Daana.ink70),
+                  ),
+                ],
+                if (order.location.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Location',
+                    style: Daana.sans(size: 13, weight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    order.location,
+                    style: Daana.sans(size: 12, color: Daana.ink70),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 Text(
                   'Items',

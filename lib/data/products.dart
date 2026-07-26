@@ -45,6 +45,7 @@ class StoreOrder {
   final String phone;
   final String email;
   final String address;
+  final String location;
   final String paymentMethod;
   final String paymentStatus;
   final String status;
@@ -61,6 +62,7 @@ class StoreOrder {
     required this.phone,
     required this.email,
     required this.address,
+    required this.location,
     required this.paymentMethod,
     required this.paymentStatus,
     required this.status,
@@ -88,6 +90,7 @@ class StoreOrder {
       phone: json['phone'] as String? ?? '',
       email: json['email'] as String? ?? '',
       address: json['address'] as String? ?? '',
+      location: json['location'] as String? ?? '',
       paymentMethod: paymentMethod,
       paymentStatus: paymentStatus,
       status: status,
@@ -109,6 +112,7 @@ class StoreOrder {
       'phone': phone,
       'email': email,
       'address': address,
+      'location': location,
       'paymentMethod': paymentMethod,
       'paymentStatus': paymentStatus,
       'status': status,
