@@ -280,6 +280,13 @@ class _AiChatSheetState extends State<_AiChatSheet> {
                           ],
                         ),
                       ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        color: Daana.ink70,
+                        splashRadius: 22,
+                        tooltip: 'Close',
+                      ),
                     ],
                   ),
                 ),

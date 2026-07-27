@@ -63,7 +63,7 @@ class CategoryScreen extends StatelessWidget {
                 ),
               )
             : GridView.count(
-                crossAxisCount: 2,
+                crossAxisCount: 4,
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.72,
