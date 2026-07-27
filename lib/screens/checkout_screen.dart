@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +10,7 @@ import '../services/whatsapp_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/eyebrow.dart';
+import 'checkout_profile_utils.dart';
 import 'location_picker_sheet.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -27,6 +30,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _addressController = TextEditingController();
   final _locationController = TextEditingController();
   String _paymentMethod = 'Cash on delivery';
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillProfileFromFirebase();
+  }
 
   @override
   void dispose() {
@@ -257,6 +266,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _prefillProfileFromFirebase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return;
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!mounted) return;
+
+      final values = buildCheckoutProfileValues(
+        profileData: snapshot.data(),
+        displayName: user.displayName,
+        email: user.email,
+      );
+
+      setState(() {
+        _firstNameController.text = values['firstName'] ?? '';
+        _lastNameController.text = values['lastName'] ?? '';
+        _phoneController.text = values['phone'] ?? '';
+        _emailController.text = values['email'] ?? '';
+        _addressController.text = values['address'] ?? '';
+        _locationController.text = values['location'] ?? '';
+      });
+    } catch (_) {
+      if (!mounted) return;
+    }
   }
 
   Future<bool> _showDummyStripePaymentSheet(num total) async {
