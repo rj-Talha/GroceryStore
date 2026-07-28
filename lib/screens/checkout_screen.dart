@@ -618,10 +618,18 @@ class _DummyStripePaymentSheetState extends State<_DummyStripePaymentSheet> {
                         child: TextFormField(
                           obscureText: true,
                           keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3),
+                          ],
                           decoration: const InputDecoration(labelText: 'CVC'),
-                          validator: (value) => (value ?? '').trim().length >= 3
-                              ? null
-                              : 'Required',
+                          validator: (value) {
+                            final trimmed = (value ?? '').trim();
+                            if (trimmed.length != 3) {
+                              return 'Enter a 3-digit CVC';
+                            }
+                            return null;
+                          },
                         ),
                       ),
                     ],

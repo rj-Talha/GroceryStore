@@ -58,66 +58,118 @@ class CartScreen extends StatelessWidget {
                           border: Border.all(color: Daana.hairlineSoft),
                         ),
                         child: Column(
-                          children: List.generate(items.length, (i) {
-                            final item = items[i];
-                            final p = item.product;
-                            final q = item.quantity;
-                            return Container(
+                          children: [
+                            ...List.generate(items.length, (i) {
+                              final item = items[i];
+                              final p = item.product;
+                              final q = item.quantity;
+                              return Container(
+                                padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                                decoration: BoxDecoration(
+                                  border: i < items.length - 1
+                                      ? Border(bottom: BorderSide(color: Daana.hairlineSoft))
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: ProductPlaceholder(
+                                        tone: p.tone,
+                                        radius: 10,
+                                        imageUrl: p.imageUrl,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.name, style: Daana.sans(size: 14)),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            p.unit,
+                                            style: Daana.sans(size: 11.5, color: Daana.ink50),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              _QtyControl(
+                                                q: q,
+                                                onDec: () => cart.updateQuantity(p.key, q - 1),
+                                                onInc: () => cart.updateQuantity(p.key, q + 1),
+                                              ),
+                                              const Spacer(),
+                                              PriceText(value: p.price * q, size: 14),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: DaanaIcon('close', size: 14, color: Daana.ink30),
+                                      onPressed: () => cart.removeItem(p.key),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                            Container(
                               padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                              decoration: BoxDecoration(
-                                border: i < items.length - 1
-                                    ? Border(bottom: BorderSide(color: Daana.hairlineSoft))
-                                    : null,
+                              decoration: const BoxDecoration(
+                                border: Border(top: BorderSide(color: Color(0xFFE5E5E5))),
                               ),
                               child: Row(
                                 children: [
-                                  SizedBox(
-                                    width: 56,
-                                    height: 56,
-                                    child: ProductPlaceholder(
-                                      tone: p.tone,
-                                      radius: 10,
-                                      imageUrl: p.imageUrl,
-                                    ),
+                                  Text(
+                                    'Delivery charges',
+                                    style: Daana.sans(size: 14, weight: FontWeight.w600),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(p.name, style: Daana.sans(size: 14)),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          p.unit,
-                                          style: Daana.sans(size: 11.5, color: Daana.ink50),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            _QtyControl(
-                                              q: q,
-                                              onDec: () => cart.updateQuantity(p.key, q - 1),
-                                              onInc: () => cart.updateQuantity(p.key, q + 1),
-                                            ),
-                                            const Spacer(),
-                                            PriceText(value: p.price * q, size: 14),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: DaanaIcon('close', size: 14, color: Daana.ink30),
-                                    onPressed: () => cart.removeItem(p.key),
+                                  const Spacer(),
+                                  PriceText(
+                                    value: cart.deliveryFee + cart.serviceFee,
+                                    size: 14,
+                                    color: Daana.ink,
                                   ),
                                 ],
                               ),
-                            );
-                          }),
+                            ),
+                          ],
                         ),
                       ),
               ),
             ),
+            if (items.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Daana.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Daana.hairlineSoft),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Total',
+                            style: Daana.sans(size: 16, weight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          PriceText(
+                            value: cart.total,
+                            size: 16,
+                            color: Daana.ink,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             if (items.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
