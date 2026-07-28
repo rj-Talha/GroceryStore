@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../screens/checkout_screen.dart';
+import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
@@ -9,8 +10,77 @@ import '../widgets/eyebrow.dart';
 import '../widgets/price.dart';
 import '../widgets/product_placeholder.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  final _firestoreService = FirestoreService();
+  final Map<String, int> _stockShortages = {};
+  bool _isCheckingStock = false;
+
+  Future<void> _handleCheckout() async {
+    final cart = context.read<CartProvider>();
+    final items = cart.items;
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Your cart is empty.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isCheckingStock = true;
+      _stockShortages.clear();
+    });
+
+    try {
+      final shortages = await _findStockShortages(items);
+      if (shortages.isEmpty) {
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _stockShortages
+          ..clear()
+          ..addAll(shortages);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Some items exceed available stock. Please update your cart.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingStock = false);
+      }
+    }
+  }
+
+  Future<Map<String, int>> _findStockShortages(List<CartItem> items) async {
+    final shortages = <String, int>{};
+
+    for (final item in items) {
+      final firebaseProduct = await _firestoreService.getProduct(item.product.key);
+      final availableStock = firebaseProduct?.availableStock;
+      if (availableStock != null && item.quantity > availableStock) {
+        shortages[item.product.key] = availableStock;
+      }
+    }
+
+    return shortages;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +133,22 @@ class CartScreen extends StatelessWidget {
                               final item = items[i];
                               final p = item.product;
                               final q = item.quantity;
+                              final hasShortage = _stockShortages.containsKey(p.key);
+                              final remainingStock = _stockShortages[p.key];
                               return Container(
                                 padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
                                 decoration: BoxDecoration(
                                   border: i < items.length - 1
-                                      ? Border(bottom: BorderSide(color: Daana.hairlineSoft))
+                                      ? Border(
+                                          bottom: BorderSide(
+                                            color: hasShortage
+                                                ? Colors.red.shade200
+                                                : Daana.hairlineSoft,
+                                          ),
+                                        )
+                                      : null,
+                                  color: hasShortage
+                                      ? Daana.bgAlt.withAlpha((0.8 * 255).round())
                                       : null,
                                 ),
                                 child: Row(
@@ -86,12 +167,28 @@ class CartScreen extends StatelessWidget {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(p.name, style: Daana.sans(size: 14)),
+                                          Text(
+                                            p.name,
+                                            style: Daana.sans(
+                                              size: 14,
+                                              color: hasShortage ? Colors.red : Daana.ink,
+                                            ),
+                                          ),
                                           const SizedBox(height: 2),
                                           Text(
                                             p.unit,
-                                            style: Daana.sans(size: 11.5, color: Daana.ink50),
+                                            style: Daana.sans(
+                                              size: 11.5,
+                                              color: hasShortage ? Colors.red : Daana.ink50,
+                                            ),
                                           ),
+                                          if (hasShortage) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Remaining Stock in inventory is $remainingStock',
+                                              style: Daana.sans(size: 11.5, color: Colors.red),
+                                            ),
+                                          ],
                                           const SizedBox(height: 8),
                                           Row(
                                             children: [
@@ -175,16 +272,11 @@ class CartScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                   child: Btn(
-                    'Checkout',
+                    _isCheckingStock ? 'Checking stock...' : 'Checkout',
                     full: true,
                     size: BtnSize.lg,
                     iconRight: 'arrowR',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-                      );
-                    },
+                    onPressed: _isCheckingStock ? null : _handleCheckout,
                   ),
                 ),
               ),
