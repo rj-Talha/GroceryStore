@@ -235,6 +235,8 @@ class _AiChatSheetState extends State<_AiChatSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Material(
       color: Colors.transparent,
       child: Align(
@@ -243,129 +245,132 @@ class _AiChatSheetState extends State<_AiChatSheet> {
           width: 320,
           color: Daana.bg,
           child: SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Daana.moss,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.smart_toy_outlined,
-                            color: Daana.bg,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "FAQ's BOT",
-                              style: Daana.serif(size: 20, height: 1.0),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Ask only e-grocery store questions',
-                              style: Daana.sans(size: 13, color: Daana.ink50),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                        color: Daana.ink70,
-                        splashRadius: 22,
-                        tooltip: 'Close',
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: Daana.hairlineSoft, height: 1),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: ListView(
-                      padding: const EdgeInsets.only(top: 16, bottom: 12),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: keyboardInset),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                    child: Row(
                       children: [
-                        ..._faqs.map((faq) => _FaqTile(faq)),
-                        if (_messages.isNotEmpty) const SizedBox(height: 16),
-                        ..._messages.map(
-                          (message) => _ChatBubble(message: message),
-                        ),
-                        if (_isLoading)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Daana.moss,
-                              ),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Daana.moss,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.smart_toy_outlined,
+                              color: Daana.bg,
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "FAQ's BOT",
+                                style: Daana.serif(size: 20, height: 1.0),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Ask only e-grocery store questions',
+                                style: Daana.sans(size: 13, color: Daana.ink50),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                          color: Daana.ink70,
+                          splashRadius: 22,
+                          tooltip: 'Close',
+                        ),
                       ],
                     ),
                   ),
-                ),
-                Divider(color: Daana.hairlineSoft, height: 1),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          decoration: BoxDecoration(
-                            color: Daana.card,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Daana.hairlineSoft),
+                  Divider(color: Daana.hairlineSoft, height: 1),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: ListView(
+                        padding: const EdgeInsets.only(top: 16, bottom: 12),
+                        children: [
+                          ..._faqs.map((faq) => _FaqTile(faq)),
+                          if (_messages.isNotEmpty) const SizedBox(height: 16),
+                          ..._messages.map(
+                            (message) => _ChatBubble(message: message),
                           ),
-                          child: TextField(
-                            controller: _questionController,
-                            textInputAction: TextInputAction.send,
-                            onSubmitted: (_) => _sendQuery(),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              hintText:
-                                  'Ask about this store, delivery, products, or orders',
-                              hintStyle: Daana.sans(
-                                size: 13,
-                                color: Daana.ink50,
+                          if (_isLoading)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Daana.moss,
+                                ),
                               ),
                             ),
-                            style: Daana.sans(size: 13),
-                          ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: _isLoading ? null : _sendQuery,
-                        child: Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: _isLoading ? Daana.ink15 : Daana.moss,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.send,
-                            color: _isLoading ? Daana.ink50 : Daana.bg,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  Divider(color: Daana.hairlineSoft, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            decoration: BoxDecoration(
+                              color: Daana.card,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Daana.hairlineSoft),
+                            ),
+                            child: TextField(
+                              controller: _questionController,
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (_) => _sendQuery(),
+                              decoration: InputDecoration(
+                                border: InputBorder.none,
+                                hintText:
+                                    'Ask about this store, delivery, products, or orders',
+                                hintStyle: Daana.sans(
+                                  size: 13,
+                                  color: Daana.ink50,
+                                ),
+                              ),
+                              style: Daana.sans(size: 13),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: _isLoading ? null : _sendQuery,
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: _isLoading ? Daana.ink15 : Daana.moss,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.send,
+                              color: _isLoading ? Daana.ink50 : Daana.bg,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
