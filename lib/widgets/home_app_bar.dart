@@ -29,6 +29,8 @@ class HomeAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 800;
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
@@ -50,7 +52,12 @@ class HomeAppBar extends StatelessWidget {
                           children: [
                             const DaanaIcon('pin', size: 15, color: Daana.moss),
                             const SizedBox(width: 6),
-                            Text('DHA Phase VI', style: Daana.sans(size: 15)),
+                            Flexible(
+                              child: Text('DHA Phase VI', 
+                                style: Daana.sans(size: isMobile ? 13 : 15),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                             const SizedBox(width: 4),
                             DaanaIcon('chevD', size: 14, color: Daana.ink50),
                           ],
@@ -59,7 +66,7 @@ class HomeAppBar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  if (label != null) ...[
+                  if (!isMobile && label != null) ...[
                     Flexible(
                       child: Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -122,7 +129,7 @@ class HomeAppBar extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: isMobile ? 8 : 0),
               child: Row(
                 children: [
                   Expanded(
@@ -132,7 +139,7 @@ class HomeAppBar extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const SearchScreen()),
                       ),
                       child: Container(
-                        height: 48,
+                        height: isMobile ? 42 : 48,
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         decoration: BoxDecoration(
                           color: Daana.card,

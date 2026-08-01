@@ -5,6 +5,7 @@ import 'package:daana/providers/catalog_provider.dart';
 import 'package:daana/screens/checkout_screen.dart';
 import 'package:daana/screens/home_screen.dart';
 import 'package:daana/services/ai_service.dart';
+import 'package:daana/widgets/product_card.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -106,6 +107,51 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  testWidgets('tapping the home product add button adds the item to cart', (
+    tester,
+  ) async {
+    final cart = CartProvider();
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: cart),
+          ChangeNotifierProvider(
+            create: (_) => CatalogProvider(
+              initialProducts: [
+                const Product(
+                  key: 'apple',
+                  name: 'Apples',
+                  unit: '1 kg',
+                  price: 120,
+                  label: 'apple',
+                  tone: 'a',
+                  salesCount: 10,
+                  trendingScore: 10,
+                  imageUrl: '',
+                ),
+              ],
+              initialIsLoading: false,
+            ),
+          ),
+        ],
+        child: const MaterialApp(home: HomeScreen()),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ProductCard).first,
+        matching: find.byType(InkWell),
+      ),
+    );
+    await tester.pump();
+
+    expect(cart.itemCount, 1);
   });
 
   test('AI service blocks unrelated questions', () async {

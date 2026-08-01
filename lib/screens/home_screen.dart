@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../data/products.dart';
+import '../providers/cart_provider.dart';
 import '../providers/catalog_provider.dart';
 import '../services/ai_service.dart';
 import '../theme/tokens.dart';
@@ -1169,7 +1170,15 @@ class _SuggestionsSectionState extends State<_SuggestionsSection> {
                           : p.unit,
                       reason: reason,
                       compact: true,
-                      onAdd: () {},
+                      onAdd: () {
+                        context.read<CartProvider>().addItem(p);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${p.name} added to cart'),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1242,7 +1251,15 @@ class _AllProductsSection extends StatelessWidget {
                             ? p.quantity!.trim()
                             : p.unit,
                         compact: true,
-                        onAdd: () {},
+                        onAdd: () {
+                          context.read<CartProvider>().addItem(p);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${p.name} added to cart'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
