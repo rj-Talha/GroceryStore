@@ -14,6 +14,7 @@ import '../widgets/product_card.dart';
 import '../widgets/product_placeholder.dart';
 import 'category_screen.dart';
 import 'product_detail_screen.dart';
+import 'saved_recipes_screen.dart';
 import 'search_screen.dart';
 import 'ai_recipe_screen.dart';
 import 'sign_in_screen.dart';
@@ -512,6 +513,31 @@ class _AddressBarState extends State<_AddressBar> {
                   ),
                 ),
               ],
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SavedRecipesScreen()),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Daana.moss.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Daana.moss.withOpacity(0.22)),
+                    ),
+                    child: Text(
+                      'My Recipe',
+                      style: Daana.sans(
+                        size: 12,
+                        color: Daana.moss,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(

@@ -1,9 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import '../services/ai_service.dart';
+import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
+import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
 import '../widgets/home_app_bar.dart';
+import 'saved_recipes_screen.dart';
+import 'sign_in_screen.dart';
 
 class AIRecipeScreen extends StatefulWidget {
   const AIRecipeScreen({super.key});
@@ -14,10 +20,12 @@ class AIRecipeScreen extends StatefulWidget {
 
 class _AIRecipeScreenState extends State<AIRecipeScreen> {
   final _aiService = AIService();
+  final _firestoreService = FirestoreService();
   final List<String> ingredients = ['chicken breast', 'tomato', 'onion', 'ginger', 'dahi', 'green chilies'];
   final TextEditingController _controller = TextEditingController();
   
   bool _isLoading = false;
+  bool _isSaving = false;
   List<RecipeOption> _recipes = [];
   int selected = 0;
 
@@ -65,6 +73,61 @@ class _AIRecipeScreenState extends State<AIRecipeScreen> {
     _fetchRecipes();
   }
 
+  Future<void> _saveSelectedRecipe() async {
+    if (_recipes.isEmpty || selected >= _recipes.length) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in first to save recipes.')),
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => SignInScreen(
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final recipe = _recipes[selected];
+      await _firestoreService.saveRecipe(
+        userId: user.uid,
+        recipe: {
+          'name': recipe.name,
+          'urdu': recipe.urdu,
+          'time': recipe.time,
+          'match': recipe.match,
+          'have': recipe.have,
+          'need': recipe.need,
+          'blurb': recipe.blurb,
+          'tag': recipe.tag,
+          'ingredients': recipe.ingredients,
+          'instructions': recipe.instructions,
+          'ingredientsInput': List<String>.from(ingredients),
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe saved to your collection.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save recipe: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,28 +141,34 @@ class _AIRecipeScreenState extends State<AIRecipeScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 28, height: 28,
-                          decoration: const BoxDecoration(
-                            color: Daana.moss, shape: BoxShape.circle,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 28, height: 28,
+                                decoration: const BoxDecoration(
+                                  color: Daana.moss, shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: DaanaIcon('sparkle', size: 14, color: Daana.bg),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Eyebrow('Recipes from your fridge'),
+                            ],
                           ),
-                          child: const Center(
-                            child: DaanaIcon('sparkle', size: 14, color: Daana.bg),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Three things you can cook tonight, with what you already have.',
+                            style: Daana.serif(size: 32, height: 1.05),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Eyebrow('Recipes from your fridge'),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Three things you can cook tonight, with what you already have.',
-                      style: Daana.serif(size: 32, height: 1.05),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -138,6 +207,19 @@ class _AIRecipeScreenState extends State<AIRecipeScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               SliverToBoxAdapter(child: _RecipeCard(recipe: _recipes[selected])),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Btn(
+                    'Save recipe',
+                    variant: BtnVariant.moss,
+                    size: BtnSize.lg,
+                    full: true,
+                    onPressed: _isSaving || _recipes.isEmpty ? null : _saveSelectedRecipe,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
@@ -319,12 +401,21 @@ class _RecipeTabs extends StatelessWidget {
   }
 }
 
-class _RecipeCard extends StatelessWidget {
+class _RecipeCard extends StatefulWidget {
   final RecipeOption recipe;
   const _RecipeCard({required this.recipe});
 
   @override
+  State<_RecipeCard> createState() => _RecipeCardState();
+}
+
+class _RecipeCardState extends State<_RecipeCard> {
+  bool _showDetails = false;
+
+  @override
   Widget build(BuildContext context) {
+    final recipe = widget.recipe;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: ClipRRect(
@@ -364,61 +455,70 @@ class _RecipeCard extends StatelessWidget {
                         _meta('Need', '${recipe.need} items'),
                       ],
                     ),
-                    if (recipe.ingredients.isNotEmpty) ...[
-                      Divider(height: 32, color: Daana.hairlineSoft),
-                      const Eyebrow('Ingredients'),
-                      const SizedBox(height: 12),
-                      ...recipe.ingredients.map((ing) => Padding(
-                            padding: const EdgeInsets.only(bottom: 6),
+                    const SizedBox(height: 16),
+                    Btn(
+                      _showDetails ? 'Hide Steps' : 'View Steps',
+                      variant: BtnVariant.soft,
+                      size: BtnSize.sm,
+                      onPressed: () => setState(() => _showDetails = !_showDetails),
+                    ),
+                    if (_showDetails) ...[
+                      if (recipe.ingredients.isNotEmpty) ...[
+                        Divider(height: 32, color: Daana.hairlineSoft),
+                        const Eyebrow('Ingredients'),
+                        const SizedBox(height: 12),
+                        ...recipe.ingredients.map((ing) => Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('• ', style: Daana.sans(size: 14, color: Daana.ink50)),
+                                  Expanded(
+                                    child: Text(ing,
+                                        style: Daana.sans(size: 14, color: Daana.ink)),
+                                  ),
+                                ],
+                              ),
+                            )),
+                      ],
+                      if (recipe.instructions.isNotEmpty) ...[
+                        Divider(height: 32, color: Daana.hairlineSoft),
+                        const Eyebrow('Cooking Guide'),
+                        const SizedBox(height: 12),
+                        ...recipe.instructions.asMap().entries.map((entry) {
+                          final index = entry.key + 1;
+                          final step = entry.value;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('• ', style: Daana.sans(size: 14, color: Daana.ink50)),
+                                Container(
+                                  width: 22,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    color: Daana.ink08,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$index',
+                                      style: Daana.mono(size: 11, color: Daana.ink),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
                                 Expanded(
-                                  child: Text(ing,
-                                      style: Daana.sans(size: 14, color: Daana.ink)),
+                                  child: Text(
+                                    step,
+                                    style: Daana.sans(size: 14, color: Daana.ink70, height: 1.5),
+                                  ),
                                 ),
                               ],
                             ),
-                          )),
-                    ],
-                    if (recipe.instructions.isNotEmpty) ...[
-                      Divider(height: 32, color: Daana.hairlineSoft),
-                      const Eyebrow('Cooking Guide'),
-                      const SizedBox(height: 12),
-                      ...recipe.instructions.asMap().entries.map((entry) {
-                        final index = entry.key + 1;
-                        final step = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 22,
-                                height: 22,
-                                decoration: BoxDecoration(
-                                  color: Daana.ink08,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '$index',
-                                    style: Daana.mono(size: 11, color: Daana.ink),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  step,
-                                  style: Daana.sans(size: 14, color: Daana.ink70, height: 1.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
+                          );
+                        }),
+                      ],
                     ],
                   ],
                 ),

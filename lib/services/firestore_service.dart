@@ -68,6 +68,36 @@ class FirestoreService {
     }
   }
 
+  Future<void> saveRecipe({
+    required String userId,
+    required Map<String, dynamic> recipe,
+  }) async {
+    await _firestore.collection('users').doc(userId).collection('savedRecipes').add({
+      ...recipe,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getSavedRecipes(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('savedRecipes')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        final data = Map<String, dynamic>.from(doc.data());
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    } catch (e) {
+      print('Firestore error: $e');
+      return [];
+    }
+  }
+
   Future<void> addOrder(Map<String, dynamic> data) async {
     await _firestore.collection('orders').add(data);
   }

@@ -12,6 +12,7 @@ import '../widgets/eyebrow.dart';
 import '../widgets/home_app_bar.dart';
 import '../widgets/price.dart';
 import '../widgets/product_placeholder.dart';
+import 'saved_recipes_screen.dart';
 
 class AIIngredientScreen extends StatefulWidget {
   const AIIngredientScreen({super.key});
@@ -112,7 +113,7 @@ class _AIIngredientScreenState extends State<AIIngredientScreen> {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Container(
                       width: 28,
                       height: 28,
@@ -594,19 +595,6 @@ class _Summary extends StatelessWidget {
               size: BtnSize.lg,
               iconRight: 'arrowR',
               onPressed: onAddAll,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 44,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Daana.bg.withOpacity(0.2)),
-              ),
-              child: Text(
-                'Save recipe',
-                style: Daana.sans(size: 14, color: Daana.bg),
-              ),
             ),
           ],
         ),

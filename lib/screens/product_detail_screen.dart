@@ -15,6 +15,7 @@ import '../widgets/product_placeholder.dart';
 
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
+import 'saved_recipes_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -158,11 +159,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       icon: const DaanaIcon('chevL', size: 22),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    Row(children: const [
-                      _CircleBtn(icon: 'heart'),
-                      SizedBox(width: 8),
-                      _CircleBtn(icon: 'bag'),
-                    ]),
+                    Row(
+                      children: [
+                        const _CircleBtn(icon: 'heart'),
+                        const SizedBox(width: 8),
+                        const _CircleBtn(icon: 'bag'),
+                      ],
+                    ),
                   ],
                 ),
               ),

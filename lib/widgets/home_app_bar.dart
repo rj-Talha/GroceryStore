@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../screens/saved_recipes_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/sign_in_screen.dart';
 import '../screens/voice_modal.dart';
@@ -70,6 +71,31 @@ class HomeAppBar extends StatelessWidget {
                       ),
                     ),
                   ],
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SavedRecipesScreen()),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Daana.moss.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Daana.moss.withOpacity(0.22)),
+                        ),
+                        child: Text(
+                          'My Recipe',
+                          style: Daana.sans(
+                            size: 12,
+                            color: Daana.moss,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
                       PageRouteBuilder(
