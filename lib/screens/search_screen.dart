@@ -1,12 +1,14 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/products.dart';
 import '../providers/catalog_provider.dart';
 import '../providers/cart_provider.dart';
 import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
+import '../widgets/premium_background.dart';
 import '../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
@@ -22,26 +24,6 @@ class _SearchScreenState extends State<SearchScreen> {
   String sort = 'popular';
   
   final TextEditingController _searchController = TextEditingController();
-
-  static const _filters = {
-    'Category': [
-      ('Leafy greens', 12, true),
-      ('Herbs', 8, false),
-      ('Frozen', 3, false),
-      ('Tomato & pepper', 14, false),
-      ('Onion & garlic', 9, false),
-    ],
-    'Sourcing': [
-      ('Local · Sindh', 22, true),
-      ('Local · Punjab', 31, false),
-      ('Organic certified', 7, false),
-    ],
-    'Price': [
-      ('Under Rs 100', 18, false),
-      ('Rs 100 – 250', 24, false),
-      ('Rs 250 +', 11, false),
-    ],
-  };
   
   @override
   void dispose() {
@@ -61,10 +43,14 @@ class _SearchScreenState extends State<SearchScreen> {
     final childAspectRatio = width >= 1200 ? 0.75 : (width >= 800 ? 0.80 : 0.62);
 
     return Scaffold(
-      backgroundColor: Daana.bg,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const PremiumBackground(),
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
             SliverPersistentHeader(
               pinned: true,
               delegate: _AppBarHeader(
@@ -107,6 +93,8 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
+    ],
+  ),
     );
   }
 }
@@ -121,7 +109,7 @@ class _AppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 20, 8),
       child: Row(
         children: [
           IconButton(
@@ -129,34 +117,54 @@ class _AppBar extends StatelessWidget {
             onPressed: onBack,
           ),
           Expanded(
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Daana.card,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Daana.hairline),
-              ),
-              child: Row(
-                children: [
-                  DaanaIcon('search', size: 15, color: Daana.ink50),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      onChanged: onChanged,
-                      decoration: InputDecoration(
-                        hintText: 'Search products...',
-                        hintStyle: Daana.sans(size: 14, color: Daana.ink30),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: Daana.sans(size: 14, color: Daana.ink),
-                    ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Daana.glass,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Daana.hairlineSoft),
                   ),
-                  DaanaIcon('mic', size: 15, color: Daana.ink50),
-                ],
+                  child: Row(
+                    children: [
+                      DaanaIcon('search', size: 18, color: Daana.ink50),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          onChanged: onChanged,
+                          decoration: InputDecoration(
+                            hintText: 'Search products...',
+                            hintStyle: Daana.sans(size: 14, color: Daana.ink30),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: Daana.sans(size: 14, color: Daana.ink),
+                        ),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Daana.mint, Daana.sage],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(
+                          child: DaanaIcon('mic', size: 18, color: Daana.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

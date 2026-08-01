@@ -1,4 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +12,7 @@ import '../theme/tokens.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
+import '../widgets/premium_background.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_placeholder.dart';
 import 'category_screen.dart';
@@ -41,30 +44,28 @@ class HomeScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        Container(
-          color: Daana.bg,
-          child: SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _AddressBar(),
-                  const SizedBox(height: 12),
-                  const _SearchBar(),
-                  const SizedBox(height: 16),
-                  if (topTrending != null) _HeroCard(product: topTrending),
-                  const SizedBox(height: 24),
-                  const _CategoriesSection(),
-                  const SizedBox(height: 20),
-                  const _AITile(),
-                  const SizedBox(height: 24),
-                  const _SuggestionsSection(),
-                  const SizedBox(height: 24),
-                  const _AllProductsSection(),
-                ],
-              ),
+        const PremiumBackground(),
+        SafeArea(
+          bottom: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 140),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _AddressBar(),
+                const SizedBox(height: 12),
+                const _SearchBar(),
+                const SizedBox(height: 18),
+                if (trending.isNotEmpty) _BannerCarousel(products: trending),
+                const SizedBox(height: 28),
+                const _CategoriesSection(),
+                const SizedBox(height: 20),
+                const _AITile(),
+                const SizedBox(height: 24),
+                const _SuggestionsSection(),
+                const SizedBox(height: 24),
+                const _AllProductsSection(),
+              ],
             ),
           ),
         ),
@@ -590,25 +591,38 @@ class _SearchBar extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => const SearchScreen()),
               ),
-              child: Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: Daana.card,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Daana.hairlineSoft),
-                ),
-                child: Row(
-                  children: [
-                    DaanaIcon('search', size: 16, color: Daana.ink50),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Search "ٹماٹر" or "Tomato"',
-                        style: Daana.sans(size: 14, color: Daana.ink50),
-                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    height: 54,
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    decoration: BoxDecoration(
+                      color: Daana.glass,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Daana.hairlineSoft),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Row(
+                      children: [
+                        DaanaIcon('search', size: 18, color: Daana.ink50),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Search "ٹماٹر" or "Tomato"',
+                            style: Daana.sans(size: 15, color: Daana.ink50),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -617,14 +631,25 @@ class _SearchBar extends StatelessWidget {
           GestureDetector(
             onTap: () => showVoiceModal(context),
             child: Container(
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
-                color: Daana.ink,
-                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  colors: [Daana.mint, Daana.sage],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Daana.moss.withAlpha(30),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: const Center(
-                child: DaanaIcon('mic', size: 18, color: Daana.bg),
+                child: DaanaIcon('mic', size: 20, color: Daana.white),
               ),
             ),
           ),
@@ -634,100 +659,207 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-class _HeroCard extends StatelessWidget {
+class _BannerCarousel extends StatefulWidget {
+  final List<Product> products;
+  const _BannerCarousel({required this.products});
+
+  @override
+  State<_BannerCarousel> createState() => _BannerCarouselState();
+}
+
+class _BannerCarouselState extends State<_BannerCarousel> {
+  late final PageController _controller;
+  late int _page;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _page = 0;
+    _controller = PageController(viewportFraction: 0.94);
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted || widget.products.isEmpty) return;
+      final next = (_page + 1) % widget.products.length;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _BannerCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.products.length != widget.products.length) {
+      _page = 0;
+      _controller.jumpToPage(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 360;
+            return SizedBox(
+              height: isCompact ? 250 : 230,
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: widget.products.length,
+                onPageChanged: (index) => setState(() => _page = index),
+                itemBuilder: (context, index) {
+                  final product = widget.products[index];
+                  return _BannerSlide(product: product, compact: isCompact);
+                },
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            widget.products.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: index == _page ? 24 : 8,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: index == _page ? Daana.mossDark : Daana.moss.withAlpha(120),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BannerSlide extends StatelessWidget {
   final Product product;
-  const _HeroCard({required this.product});
+  final bool compact;
+  const _BannerSlide({required this.product, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 20),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(26),
         child: Container(
-          color: Daana.ink,
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(compact ? 16 : 20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Daana.mossDark, Color(0xFF1F4B30)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: Daana.glowShadow,
+          ),
           child: Stack(
-            clipBehavior: Clip.hardEdge,
             children: [
               Positioned(
-                right: -28,
-                top: 16,
+                top: compact ? 12 : 20,
+                right: compact ? 12 : 20,
                 child: Opacity(
-                  opacity: 0.9,
+                  opacity: 0.15,
                   child: SizedBox(
-                    width: 140,
-                    height: 140,
-                    child: ClipOval(
-                      child: ProductPlaceholder(
-                        label: product.label,
-                        tone: product.tone,
-                        radius: 70,
-                        imageUrl: product.imageUrl,
+                    width: compact ? 96 : 120,
+                    height: compact ? 96 : 120,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [Daana.mint.withAlpha(120), Colors.transparent],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Eyebrow(
-                    'Trending this week',
-                    color: Daana.bg.withOpacity(0.55),
-                    size: 9.5,
+              Positioned(
+                right: compact ? 0 : 0,
+                top: compact ? 10 : 20,
+                child: Hero(
+                  tag: 'banner-${product.key}',
+                  child: SizedBox(
+                    width: compact ? 120 : 140,
+                    height: compact ? 120 : 140,
+                    child: ProductPlaceholder(
+                      label: product.label,
+                      tone: product.tone,
+                      radius: compact ? 60 : 70,
+                      imageUrl: product.imageUrl,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 240),
-                    child: RichText(
-                      text: TextSpan(
-                        style: Daana.serif(
-                          size: 38,
-                          color: Daana.bg,
-                          height: 0.95,
-                        ),
+                ),
+              ),
+              Positioned.fill(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Daana.mint.withAlpha(220),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextSpan(text: '${product.name.split(' ')[0]} are '),
-                          TextSpan(
-                            text: 'trending.',
-                            style: Daana.serif(
-                              size: 38,
-                              color: Daana.goldHighlight,
-                              style: FontStyle.italic,
-                              height: 0.95,
-                            ),
-                          ),
+                          const DaanaIcon('flame', size: 14, color: Daana.mossDark),
+                          const SizedBox(width: 8),
+                          Text('Trending this week', style: Daana.sans(size: 11, color: Daana.mossDark, weight: FontWeight.w600)),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 220),
-                    child: Text(
-                      'Everyone is buying ${product.name.toLowerCase()} right now. Delivered today.',
-                      style: Daana.sans(
-                        size: 13,
-                        color: Daana.bg.withOpacity(0.7),
-                        height: 1.45,
+                    SizedBox(height: compact ? 12 : 16),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        '${product.name} are trending.',
+                        style: Daana.serif(size: compact ? 20 : 26, color: Daana.white, height: 1.05),
+                        maxLines: compact ? 2 : 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Btn(
-                    'Shop now',
-                    variant: BtnVariant.light,
-                    size: BtnSize.sm,
-                    iconRight: 'arrowR',
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(product: product),
+                    SizedBox(height: compact ? 6 : 8),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Text(
+                        'Everyone is buying ${product.name.toLowerCase()} right now. Delivered today.',
+                        style: Daana.sans(size: compact ? 12 : 14, color: Daana.white.withOpacity(0.82), height: 1.4),
+                        maxLines: compact ? 3 : 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ),
-                ],
+                    const Spacer(),
+                    Btn(
+                      'Shop now',
+                      variant: BtnVariant.moss,
+                      size: compact ? BtnSize.sm : BtnSize.md,
+                      iconRight: 'arrowR',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailScreen(product: product),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -751,6 +883,17 @@ class _CategoriesSection extends StatelessWidget {
     ('Drinks', 'مشروبات', 'b', Icons.local_drink),
     ('Home', 'گھر', 'e', Icons.cleaning_services),
   ];
+
+  static const _categoryImages = {
+    'Fruits': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIguRwNvGFvWEwTWcwmp1BepLcMKHDQtoRff2DqVbHWA&s=10',
+    'Veg': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZbmxWZLe1A_Vil0nNcK5WWQ2DGeqaFfA-hq6cOqqPKQ&s=10',
+    'Meat': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsCDX6JlAmdG4Lamp5JVL6YCFnXjtn7Tx-OKdqSKDiSmM4RCyJ_R1IEGY&s=10',
+    'Dairy': 'https://domf5oio6qrcr.cloudfront.net/medialibrary/9685/iStock-544807136.jpg',
+    'Bakery': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwgiVphhGjQgnmpPG_LV745EAzJhN2ng3wgctDk9H5hBwRpn1TQ7Srn3k&s=10',
+    'Pantry': 'https://images.squarespace-cdn.com/content/v1/5aba884031d4dfc50ab90a6e/1666813212484-QHWOPPBJVPJSCRPR9TDK/IMG_0117.JPG',
+    'Drinks': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxfqtVMlEFEGKksJpP-iAAd8FKsgF9l975CSEmC-WXEQ&s=10',
+    'Home': 'https://interwood.pk/cdn/shop/files/Oliver_Single_Bed.jpg?v=1757596535',
+  };
 
   static const _toneBg = {
     'a': Color(0xFFE8E2D2),
@@ -776,66 +919,93 @@ class _CategoriesSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.85,
-            children: cats.map((c) {
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  if (c.$1 == 'Home') {
-                    context.read<CatalogProvider>().refreshProducts();
-                    return;
-                  }
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final columns = 4;
+              final imageSize = width >= 500 ? 72.0 : 56.0;
+              final iconSize = width >= 500 ? 28.0 : 22.0;
+              final textSize = width >= 500 ? 13.0 : 11.5;
+              final urduSize = width >= 500 ? 11.0 : 10.0;
+              final cardPadding = width >= 500 ? 14.0 : 10.0;
+              final childAspectRatio = width >= 500 ? 0.82 : 0.72;
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => CategoryScreen(category: c.$1)),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Daana.card,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Daana.hairlineSoft),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: _toneBg[c.$3],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Icon(c.$4, size: 26, color: Daana.mossInk),
-                        ),
+              return GridView.count(
+                padding: EdgeInsets.zero,
+                crossAxisCount: columns,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: childAspectRatio,
+                children: List.generate(cats.length, (index) {
+                  final c = cats[index];
+                  return GestureDetector(
+                    onTap: () {
+                      if (c.$1 == 'Home') {
+                        context.read<CatalogProvider>().refreshProducts();
+                        return;
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => CategoryScreen(category: c.$1)),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(cardPadding),
+                      decoration: BoxDecoration(
+                        color: Daana.card,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: Daana.hairlineSoft),
+                        boxShadow: Daana.softShadow,
                       ),
-                      const SizedBox(height: 6),
-                      Text(c.$1, style: Daana.sans(size: 11.5, height: 1.1)),
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Text(
-                          c.$2,
-                          style: Daana.urdu(
-                            size: 11,
-                            color: Daana.ink50,
-                            height: 1.0,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: imageSize,
+                            height: imageSize,
+                            decoration: BoxDecoration(
+                              color: _toneBg[c.$3],
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: _categoryImages.containsKey(c.$1)
+                                ? Image.network(
+                                    _categoryImages[c.$1]!,
+                                    fit: BoxFit.cover,
+                                    width: imageSize,
+                                    height: imageSize,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Icon(c.$4, size: iconSize, color: Daana.mossDark),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Icon(c.$4, size: iconSize, color: Daana.mossDark),
+                                  ),
                           ),
-                        ),
+                          SizedBox(height: width >= 500 ? 14 : 10),
+                          Text(c.$1, style: Daana.sans(size: textSize, weight: FontWeight.w600), textAlign: TextAlign.center),
+                          SizedBox(height: width >= 500 ? 4 : 2),
+                          Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text(
+                              c.$2,
+                              style: Daana.urdu(
+                                size: urduSize,
+                                color: Daana.ink60,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }),
               );
-            }).toList(),
+            },
           ),
         ],
       ),

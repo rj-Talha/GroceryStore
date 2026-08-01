@@ -6,7 +6,7 @@ enum BtnVariant { primary, moss, ghost, quiet, soft, light }
 
 enum BtnSize { sm, md, lg }
 
-class Btn extends StatelessWidget {
+class Btn extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
   final BtnVariant variant;
@@ -29,73 +29,136 @@ class Btn extends StatelessWidget {
   });
 
   @override
+  State<Btn> createState() => _BtnState();
+}
+
+class _BtnState extends State<Btn> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final dims = switch (size) {
-      BtnSize.sm => (h: 32.0, px: 12.0, fs: 13.0),
-      BtnSize.md => (h: 40.0, px: 16.0, fs: 14.0),
-      BtnSize.lg => (h: 48.0, px: 22.0, fs: 15.0),
+    final dims = switch (widget.size) {
+      BtnSize.sm => (h: 36.0, px: 14.0, fs: 13.0),
+      BtnSize.md => (h: 44.0, px: 18.0, fs: 14.0),
+      BtnSize.lg => (h: 52.0, px: 24.0, fs: 15.0),
     };
 
-    final colors = switch (variant) {
-      BtnVariant.primary => (bg: Daana.ink, fg: Daana.bg, border: Colors.transparent),
-      BtnVariant.moss => (bg: Daana.moss, fg: Daana.bg, border: Colors.transparent),
-      BtnVariant.ghost => (bg: Colors.transparent, fg: Daana.ink, border: Daana.hairline),
-      BtnVariant.quiet => (bg: Colors.transparent, fg: Daana.ink, border: Colors.transparent),
-      BtnVariant.soft => (bg: Daana.ink08, fg: Daana.ink, border: Colors.transparent),
-      BtnVariant.light => (bg: Daana.bg, fg: Daana.ink, border: Colors.transparent),
-    };
-
-    final child = Row(
-      mainAxisSize: full ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (icon != null) ...[
-          DaanaIcon(icon!, size: dims.fs + 2, color: colors.fg),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: Daana.sans(
-              size: dims.fs,
-              color: colors.fg,
-              weight: FontWeight.w500,
-              letterSpacing: -0.005 * dims.fs,
+    final style = switch (widget.variant) {
+      BtnVariant.primary => _BtnStyle(
+            gradient: const LinearGradient(
+              colors: [Daana.mint, Daana.sage],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            foreground: Daana.mossDark,
+            border: Colors.transparent,
           ),
-        ),
-        if (iconRight != null) ...[
-          const SizedBox(width: 8),
-          DaanaIcon(iconRight!, size: dims.fs + 2, color: colors.fg),
-        ],
-      ],
-    );
+      BtnVariant.moss => _BtnStyle(
+            gradient: const LinearGradient(
+              colors: [Daana.mossDark, Daana.moss],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            foreground: Daana.white,
+            border: Colors.transparent,
+          ),
+      BtnVariant.ghost => _BtnStyle(
+            gradient: const LinearGradient(colors: [Colors.transparent, Colors.transparent]),
+            foreground: Daana.ink,
+            border: Daana.hairline,
+          ),
+      BtnVariant.quiet => _BtnStyle(
+            gradient: const LinearGradient(colors: [Colors.transparent, Colors.transparent]),
+            foreground: Daana.ink,
+            border: Colors.transparent,
+          ),
+      BtnVariant.soft => _BtnStyle(
+            gradient: const LinearGradient(colors: [Daana.glass, Daana.glass]),
+            foreground: Daana.ink,
+            border: Colors.transparent,
+          ),
+      BtnVariant.light => _BtnStyle(
+            gradient: const LinearGradient(colors: [Daana.bgAlt, Daana.bgAlt]),
+            foreground: Daana.ink,
+            border: Colors.transparent,
+          ),
+    };
 
-    return SizedBox(
-      width: full ? double.infinity : null,
-      height: dims.h,
-      child: Material(
-        color: colors.bg,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(999),
-          child: Container(
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 160),
+      scale: _pressed ? 0.98 : 1.0,
+      curve: Curves.easeOutCubic,
+      child: SizedBox(
+        width: widget.full ? double.infinity : null,
+        height: dims.h,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          child: DecoratedBox(
             decoration: BoxDecoration(
+              gradient: style.gradient,
               borderRadius: BorderRadius.circular(999),
-              border: colors.border != Colors.transparent
-                  ? Border.all(color: colors.border, width: 1)
+              border: style.border != Colors.transparent ? Border.all(color: style.border) : null,
+              boxShadow: widget.onPressed != null
+                  ? [
+                      BoxShadow(
+                        color: style.gradient.colors.last.withAlpha(50),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
                   : null,
             ),
-            padding: padding ?? EdgeInsets.symmetric(horizontal: dims.px),
-            alignment: Alignment.center,
-            child: child,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: widget.onPressed,
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: widget.padding ?? EdgeInsets.symmetric(horizontal: dims.px),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.icon != null) ...[
+                        DaanaIcon(widget.icon!, size: dims.fs + 2, color: style.foreground),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          overflow: TextOverflow.ellipsis,
+                          style: Daana.sans(
+                            size: dims.fs,
+                            color: style.foreground,
+                            weight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (widget.iconRight != null) ...[
+                        const SizedBox(width: 8),
+                        DaanaIcon(widget.iconRight!, size: dims.fs + 2, color: style.foreground),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+class _BtnStyle {
+  final Gradient gradient;
+  final Color foreground;
+  final Color border;
+
+  const _BtnStyle({required this.gradient, required this.foreground, required this.border});
 }
 
 class DChip extends StatelessWidget {

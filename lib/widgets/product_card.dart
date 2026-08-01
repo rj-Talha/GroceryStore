@@ -25,112 +25,115 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(compact ? 12 : 14),
-        decoration: BoxDecoration(
-          color: Daana.card,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Daana.hairlineSoft, width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ProductPlaceholder(label: product.label, tone: product.tone, radius: 12, imageUrl: product.imageUrl),
-                if (product.deal != null)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Daana.ink,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '−${product.deal}%',
-                        style: Daana.mono(size: 9, color: Daana.bg, letterSpacing: 1.0),
-                      ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          padding: EdgeInsets.all(compact ? 12 : 16),
+          decoration: BoxDecoration(
+            gradient: Daana.cardGradient,
+            color: Daana.card,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Daana.hairlineSoft),
+            boxShadow: Daana.softShadow,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: ProductPlaceholder(
+                      label: product.label,
+                      tone: product.tone,
+                      radius: 18,
+                      imageUrl: product.imageUrl,
                     ),
                   ),
-                if (onAdd != null)
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: _AddButton(onTap: onAdd!),
-                  ),
-              ],
-            ),
-            SizedBox(height: compact ? 8 : 10),
-            Text(
-              product.name,
-              style: Daana.sans(
-                size: compact ? 13 : 14,
-                color: Daana.ink,
-                height: 1.25,
+                  if (product.deal != null)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Daana.mossDark,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '−${product.deal}%',
+                          style: Daana.sans(size: 11, color: Daana.white, weight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  if (onAdd != null)
+                    Positioned(
+                      bottom: 10,
+                      right: 10,
+                      child: _AddButton(onTap: onAdd!),
+                    ),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if ((product.quantity ?? '').trim().isNotEmpty) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: 12),
               Text(
-                'Quantity: ${product.quantity!.trim()}',
-                style: Daana.sans(size: 11.2, color: Daana.ink50),
+                product.name,
+                style: Daana.sans(
+                  size: compact ? 13 : 15,
+                  color: Daana.ink,
+                  weight: FontWeight.w700,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-            ],
-            const SizedBox(height: 2),
-            Text(
-              subtitle ?? product.unit,
-              style: Daana.sans(size: 11.5, color: Daana.ink50),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (reason != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Daana.hairlineSoft)),
+              const SizedBox(height: 6),
+              Text(
+                subtitle ?? product.unit,
+                style: Daana.sans(size: 12, color: Daana.ink60),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (reason != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  reason!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Daana.sans(size: 12, color: Daana.mossDark, height: 1.35),
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DaanaIcon('sparkle', size: 11, color: Daana.moss),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        reason!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Daana.sans(size: 11.5, color: Daana.moss, height: 1.3),
-                      ),
-                    ),
-                  ],
-                ),
+              ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PriceText(value: product.price, size: compact ? 15 : 16, color: Daana.ink),
+                      if (product.old != null)
+                        Text(
+                          'Rs ${Products.formatRs(product.old!)}',
+                          style: Daana.sans(size: 11, color: Daana.ink40).copyWith(
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  if (product.deal == null)
+                    const SizedBox(width: 24),
+                ],
               ),
             ],
-            SizedBox(height: compact ? 8 : 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                PriceText(value: product.price, size: compact ? 14 : 15),
-                if (product.old != null)
-                  Text(
-                    'Rs ${Products.formatRs(product.old!)}',
-                    style: Daana.sans(size: 11, color: Daana.ink30).copyWith(
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

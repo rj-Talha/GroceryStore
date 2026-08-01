@@ -30,71 +30,104 @@ class AppFooter extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Daana.bg,
-          border: Border(top: BorderSide(color: Daana.hairlineSoft)),
-        ),
-        padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_items.length, (index) {
-            final isSelected = index == selectedIndex;
-            final item = _items[index];
-            return InkWell(
-              onTap: () => onSelected(index),
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF4FFF8), Color(0xFFFFFFFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Daana.hairlineSoft),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(18),
+                blurRadius: 28,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_items.length, (index) {
+              final isSelected = index == selectedIndex;
+              final item = _items[index];
+              return Expanded(
+                child: AnimatedScale(
+                  scale: isSelected ? 1.05 : 1.0,
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  child: GestureDetector(
+                    onTap: () => onSelected(index),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        DaanaIcon(
-                          item.$1,
-                          size: 20,
-                          color: isSelected ? Daana.ink : Daana.ink50,
-                        ),
-                        if (index == 3 && productCount > 0)
-                          Positioned(
-                            top: -4,
-                            right: -6,
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 14),
-                              height: 14,
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(horizontal: 3),
-                              decoration: const BoxDecoration(
-                                color: Daana.moss,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '$productCount',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: Daana.bg,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: isSelected ? Daana.moss : Daana.glass,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: isSelected ? Daana.mossDark.withAlpha(80) : Daana.hairlineSoft),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Daana.moss.withAlpha(24),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ]
+                                : null,
                           ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              DaanaIcon(
+                                item.$1,
+                                size: 20,
+                                color: isSelected ? Daana.white : Daana.ink60,
+                              ),
+                              if (index == 3 && productCount > 0)
+                                Positioned(
+                                  top: 4,
+                                  right: 6,
+                                  child: Container(
+                                    constraints: const BoxConstraints(minWidth: 16),
+                                    height: 16,
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    decoration: const BoxDecoration(
+                                      color: Daana.moss,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '$productCount',
+                                      style: Daana.sans(size: 10, color: Daana.white, weight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          item.$2,
+                          style: Daana.sans(
+                            size: 11,
+                            color: isSelected ? Daana.mossDark : Daana.ink60,
+                            weight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.$2,
-                      style: Daana.sans(
-                        size: 10.5,
-                        color: isSelected ? Daana.ink : Daana.ink50,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
