@@ -4,6 +4,7 @@ import '../data/products.dart';
 import '../providers/catalog_provider.dart';
 import '../providers/cart_provider.dart';
 import '../theme/tokens.dart';
+import '../widgets/app_footer.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
@@ -57,56 +58,84 @@ class _SearchScreenState extends State<SearchScreen> {
     final width = MediaQuery.of(context).size.width;
     
     final crossAxisCount = width >= 1200 ? 4 : (width >= 800 ? 3 : 2);
-    
-    final childAspectRatio = width >= 1200 ? 0.75 : (width >= 800 ? 0.80 : 0.62);
 
-    return Scaffold(
-      backgroundColor: Daana.bg,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _AppBarHeader(
-                controller: _searchController,
-                onBack: () => Navigator.pop(context),
-                onChanged: (val) => setState(() => q = val),
-              ),
-            ),
-            if (q.isNotEmpty) SliverToBoxAdapter(child: _Breadcrumb(q: q)),
-            SliverToBoxAdapter(child: _Header(q: q, count: results.length)),
-            SliverToBoxAdapter(child: _SortRow(sort: sort, onChange: (v) => setState(() => sort = v))),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (q.toLowerCase() == 'palak') const SliverToBoxAdapter(child: _AISuggestion()),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: childAspectRatio,
+    final childAspectRatio = width >= 1200
+        ? 0.72
+        : width >= 800
+            ? 0.76
+            : 0.64;
+
+    return ValueListenableBuilder<int>(
+      valueListenable: activeAppTab,
+      builder: (context, tab, _) {
+        return Scaffold(
+          backgroundColor: Daana.bg,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _AppBarHeader(
+                    controller: _searchController,
+                    onBack: () => Navigator.pop(context),
+                    onChanged: (val) => setState(() => q = val),
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => ProductCard(
-                    product: results[i],
-                    onAdd: () => cart.addItem(results[i]),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProductDetailScreen(product: results[i]),
+                if (q.isNotEmpty) SliverToBoxAdapter(child: _Breadcrumb(q: q)),
+                SliverToBoxAdapter(child: _Header(q: q, count: results.length)),
+                SliverToBoxAdapter(child: _SortRow(sort: sort, onChange: (v) => setState(() => sort = v))),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                if (q.toLowerCase() == 'palak') const SliverToBoxAdapter(child: _AISuggestion()),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      childAspectRatio: childAspectRatio,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => ProductCard(
+                        product: results[i],
+                        compact: true,
+                        subtitle: results[i].quantity?.trim().isNotEmpty == true
+                            ? results[i].quantity!.trim()
+                            : results[i].unit,
+                        onAdd: () {
+                          cart.addItem(results[i]);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${results[i].name} added to cart'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailScreen(product: results[i]),
+                          ),
+                        ),
                       ),
+                      childCount: results.length,
                     ),
                   ),
-                  childCount: results.length,
                 ),
-              ),
+                // Filters removed per request
+              ],
             ),
-            // Filters removed per request
-          ],
-        ),
-      ),
+          ),
+          bottomNavigationBar: AppFooter(
+            selectedIndex: tab,
+            onSelected: (index) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              activeAppTab.value = index;
+            },
+          ),
+        );
+      },
     );
   }
 }
