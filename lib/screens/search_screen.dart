@@ -48,6 +48,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
+      bottomNavigationBar: ValueListenableBuilder<int>(
+        valueListenable: activeAppTab,
+        builder: (context, tab, _) => AppFooter(
+          selectedIndex: tab,
+          onSelected: (index) {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            activeAppTab.value = index;
+          },
+        ),
+      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
