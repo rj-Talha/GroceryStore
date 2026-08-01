@@ -184,6 +184,74 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     }
   }
 
+  Future<void> _orderMoreStock(Product product) async {
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Order more ${product.name}'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Order amount',
+              hintText: 'e.g. 50',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Order'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      controller.dispose();
+      return;
+    }
+
+    final amount = int.tryParse(controller.text.trim()) ?? 0;
+    controller.dispose();
+
+    if (amount <= 0) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid order amount.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _statusMessage = 'Ordering ${amount} more ${product.name}...';
+      _statusColor = Daana.ink70;
+    });
+
+    try {
+      await _firestoreService.incrementProductStock(product.key, amount);
+      await _loadProducts();
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Ordered ${amount} more ${product.name}. Inventory updated.';
+        _statusColor = Daana.moss;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _statusMessage = 'Failed to order ${product.name}.';
+        _statusColor = Colors.red.shade700;
+      });
+    }
+  }
+
   Future<void> _deleteProduct(Product product) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -659,17 +727,18 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                           child: ListTile(
                             title: Text(p.name, style: Daana.sans(size: 14, weight: FontWeight.w600)),
                             subtitle: Text('Available: ${p.availableStock ?? 0}', style: Daana.sans(size: 12, color: Daana.ink70)),
-                            trailing: ElevatedButton(
-                              onPressed: () {
-                                // close drawer and scroll to product in main list? For now just close.
+                            trailing: OutlinedButton(
+                              onPressed: () async {
+                                await _orderMoreStock(p);
+                                if (!mounted) return;
                                 Navigator.of(context).maybePop();
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Daana.ink,
-                                foregroundColor: Daana.bg,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Daana.moss,
+                                side: BorderSide(color: Daana.moss.withOpacity(0.4)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                               ),
-                              child: const Text('Close'),
+                              child: const Text('Order'),
                             ),
                           ),
                         );

@@ -109,6 +109,24 @@ class FirestoreService {
     return (availableStock - orderedQuantity).clamp(0, 999999999);
   }
 
+  Future<void> incrementProductStock(String productId, int amount) async {
+    if (amount <= 0) {
+      return;
+    }
+
+    final docRef = _firestore.collection('products').doc(productId);
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) {
+        return;
+      }
+
+      final currentStock = (snapshot.data()?['availableStock'] as int?);
+      final nextStock = (currentStock ?? 0) + amount;
+      transaction.update(docRef, {'availableStock': nextStock});
+    });
+  }
+
   Future<void> updateStockAfterOrder(List<Map<String, dynamic>> items) async {
     if (items.isEmpty) {
       return;

@@ -5,6 +5,7 @@ import 'package:daana/providers/catalog_provider.dart';
 import 'package:daana/screens/checkout_screen.dart';
 import 'package:daana/screens/home_screen.dart';
 import 'package:daana/services/ai_service.dart';
+import 'package:daana/widgets/home_app_bar.dart';
 import 'package:daana/widgets/product_card.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +71,21 @@ void main() {
       expect(find.text('Enter a valid month/year'), findsOneWidget);
     },
   );
+
+  testWidgets('home app bar shows sign-out confirmation dialog for signed-in users', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: HomeAppBar(isSignedInOverride: true))),
+    );
+
+    await tester.tap(find.byKey(const Key('home_app_bar_user_icon')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign out?'), findsOneWidget);
+    expect(find.text('Yes'), findsOneWidget);
+    expect(find.text('No'), findsOneWidget);
+  });
 
   testWidgets('home screen shows AI chatbot FAQ button', (tester) async {
     await tester.pumpWidget(

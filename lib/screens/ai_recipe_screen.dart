@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/ai_service.dart';
 import '../services/firestore_service.dart';
 import '../theme/tokens.dart';
+import '../widgets/app_footer.dart';
 import '../widgets/btn.dart';
 import '../widgets/daana_icon.dart';
 import '../widgets/eyebrow.dart';
@@ -12,7 +13,9 @@ import 'saved_recipes_screen.dart';
 import 'sign_in_screen.dart';
 
 class AIRecipeScreen extends StatefulWidget {
-  const AIRecipeScreen({super.key});
+  final bool showFooter;
+
+  const AIRecipeScreen({super.key, this.showFooter = false});
 
   @override
   State<AIRecipeScreen> createState() => _AIRecipeScreenState();
@@ -225,6 +228,15 @@ class _AIRecipeScreenState extends State<AIRecipeScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: widget.showFooter
+          ? AppFooter(
+              selectedIndex: activeAppTab.value,
+              onSelected: (index) {
+                activeAppTab.value = index;
+                Navigator.of(context).maybePop();
+              },
+            )
+          : null,
     );
   }
 }
