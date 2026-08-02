@@ -50,12 +50,20 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: Colors.transparent,
       bottomNavigationBar: ValueListenableBuilder<int>(
         valueListenable: activeAppTab,
-        builder: (context, tab, _) => AppFooter(
-          selectedIndex: tab,
-          onSelected: (index) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-            activeAppTab.value = index;
-          },
+        builder: (context, tab, _) => Container(
+          color: Daana.bgAlt,
+          child: AppFooter(
+            selectedIndex: tab,
+            backgroundGradient: const LinearGradient(
+              colors: [Daana.bgAlt, Daana.white],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            onSelected: (index) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              activeAppTab.value = index;
+            },
+          ),
         ),
       ),
       body: Stack(

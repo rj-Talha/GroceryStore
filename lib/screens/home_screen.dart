@@ -23,6 +23,7 @@ import 'search_screen.dart';
 import 'ai_recipe_screen.dart';
 import 'sign_in_screen.dart';
 import 'voice_modal.dart';
+import '../widgets/app_footer.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -458,18 +459,22 @@ class _AddressBar extends StatefulWidget {
 }
 
 class _AddressBarState extends State<_AddressBar> {
-  String? _displayLabel(User? user) {
-    final displayName = (user?.displayName ?? '').trim();
+  String _displayLabel(User? user) {
+    if (user == null) {
+      return 'Guest User';
+    }
+    
+    final displayName = (user.displayName ?? '').trim();
     if (displayName.isNotEmpty) {
       return displayName;
     }
 
-    final email = (user?.email ?? '').trim();
+    final email = (user.email ?? '').trim();
     if (email.isNotEmpty) {
       return email.split('@').first;
     }
 
-    return null;
+    return 'Guest User';
   }
 
   Future<void> _handleUserIconTap(BuildContext context, {required bool isSignedIn}) async {
@@ -552,16 +557,14 @@ class _AddressBarState extends State<_AddressBar> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        if (label != null) ...[
-                          Expanded(
-                            child: Text(
-                              'Hi, $label',
-                              style: Daana.sans(size: 12, color: Daana.ink70),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        Expanded(
+                          child: Text(
+                            'Hi, $label',
+                            style: Daana.sans(size: 12, color: Daana.ink70),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(width: 8),
-                        ],
+                        ),
+                        const SizedBox(width: 8),
                         MouseRegion(
                           cursor: SystemMouseCursors.click,
                           child: GestureDetector(
@@ -629,18 +632,16 @@ class _AddressBarState extends State<_AddressBar> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (label != null) ...[
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Text(
-                            'Hi, $label',
-                            style: Daana.sans(size: 12, color: Daana.ink70),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Text(
+                          'Hi, $label',
+                          style: Daana.sans(size: 12, color: Daana.ink70),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ],
+                    ),
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
@@ -1177,10 +1178,13 @@ class _AITile extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AIRecipeScreen(showFooter: true)),
-              ),
+              onTap: () {
+                activeAppTab.value = 1;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AIRecipeScreen(showFooter: true)),
+                );
+              },
               child: Container(
                 height: 36,
                 padding: const EdgeInsets.symmetric(horizontal: 14),

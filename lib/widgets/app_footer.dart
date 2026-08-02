@@ -10,11 +10,13 @@ final activeAppTab = ValueNotifier<int>(0);
 class AppFooter extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final LinearGradient? backgroundGradient;
 
   const AppFooter({
     super.key,
     required this.selectedIndex,
     required this.onSelected,
+    this.backgroundGradient,
   });
 
   static const _items = [
@@ -34,8 +36,8 @@ class AppFooter extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFF4FFF8), Color(0xFFFFFFFF)],
+            gradient: backgroundGradient ?? const LinearGradient(
+              colors: [Daana.bgAlt, Daana.white],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
