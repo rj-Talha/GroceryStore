@@ -1003,11 +1003,11 @@ class _CategoriesSection extends StatelessWidget {
     'Fruits': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIguRwNvGFvWEwTWcwmp1BepLcMKHDQtoRff2DqVbHWA&s=10',
     'Veg': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZbmxWZLe1A_Vil0nNcK5WWQ2DGeqaFfA-hq6cOqqPKQ&s=10',
     'Meat': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsCDX6JlAmdG4Lamp5JVL6YCFnXjtn7Tx-OKdqSKDiSmM4RCyJ_R1IEGY&s=10',
-    'Dairy': 'https://domf5oio6qrcr.cloudfront.net/medialibrary/9685/iStock-544807136.jpg',
+    'Dairy': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfSlgJaTgFJdFGXhgSe341NLWCxcxMUkRpD_uggEnc5Q&s',
     'Bakery': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwgiVphhGjQgnmpPG_LV745EAzJhN2ng3wgctDk9H5hBwRpn1TQ7Srn3k&s=10',
     'Pantry': 'https://images.squarespace-cdn.com/content/v1/5aba884031d4dfc50ab90a6e/1666813212484-QHWOPPBJVPJSCRPR9TDK/IMG_0117.JPG',
     'Drinks': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSxfqtVMlEFEGKksJpP-iAAd8FKsgF9l975CSEmC-WXEQ&s=10',
-    'Home': 'https://interwood.pk/cdn/shop/files/Oliver_Single_Bed.jpg?v=1757596535',
+    'Home': '',
   };
 
   static const _toneBg = {
