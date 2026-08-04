@@ -289,7 +289,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: Daana.ink,
+                        color: Daana.sage,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Center(

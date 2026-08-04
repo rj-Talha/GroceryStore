@@ -323,14 +323,6 @@ class _PantryInput extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 42, height: 42,
-                  decoration: BoxDecoration(
-                    color: Daana.ink08, borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Center(child: DaanaIcon('mic', size: 15)),
-                ),
               ],
             ),
           ],
@@ -352,62 +344,65 @@ class _RecipeTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 92,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: recipes.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(recipes.length, (i) {
           final r = recipes[i];
           final active = selected == i;
-          return GestureDetector(
-            onTap: () => onSelect(i),
-            child: Container(
-              width: 200,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              decoration: BoxDecoration(
-                color: active ? Daana.ink : Daana.card,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: active ? Daana.ink : Daana.hairlineSoft,
+          return Padding(
+            padding: EdgeInsets.only(right: i == recipes.length - 1 ? 0 : 8),
+            child: GestureDetector(
+              onTap: () => onSelect(i),
+              child: Container(
+                width: 200,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                decoration: BoxDecoration(
+                  color: active ? Daana.ink : Daana.card,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: active ? Daana.ink : Daana.hairlineSoft,
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    r.tag.isNotEmpty ? r.tag.toUpperCase() : 'OPTION ${(i + 1).toString().padLeft(2, '0')}',
-                    style: Daana.mono(
-                      size: 10,
-                      color: (active ? Daana.bg : Daana.ink).withOpacity(0.6),
-                      letterSpacing: 1.5,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      r.tag.isNotEmpty ? r.tag.toUpperCase() : 'OPTION ${(i + 1).toString().padLeft(2, '0')}',
+                      style: Daana.mono(
+                        size: 10,
+                        color: (active ? Daana.bg : Daana.ink).withOpacity(0.6),
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    r.name,
-                    style: Daana.serif(
-                      size: 20,
-                      color: active ? Daana.bg : Daana.ink,
-                      height: 1.0,
+                    const SizedBox(height: 4),
+                    Text(
+                      r.name,
+                      style: Daana.serif(
+                        size: 20,
+                        color: active ? Daana.bg : Daana.ink,
+                        height: 1.0,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${r.time} · ${r.match}% MATCH',
-                    style: Daana.sans(
-                      size: 11,
-                      color: (active ? Daana.bg : Daana.ink).withOpacity(0.75),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${r.time} · ${r.match}% MATCH',
+                      style: Daana.sans(
+                        size: 11,
+                        color: (active ? Daana.bg : Daana.ink).withOpacity(0.75),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }),
       ),
     );
   }
@@ -427,6 +422,10 @@ class _RecipeCardState extends State<_RecipeCard> {
   @override
   Widget build(BuildContext context) {
     final recipe = widget.recipe;
+    final titleStyle = Daana.serif(
+      size: MediaQuery.of(context).size.width > 640 ? 36 : 28,
+      height: 1.0,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -448,7 +447,12 @@ class _RecipeCardState extends State<_RecipeCard> {
                   children: [
                     Eyebrow('Suggestion · ${recipe.match}% match'),
                     const SizedBox(height: 10),
-                    Text(recipe.name, style: Daana.serif(size: 36, height: 1.0)),
+                    Text(
+                      recipe.name,
+                      style: titleStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 4),
                     Directionality(
                       textDirection: TextDirection.rtl,

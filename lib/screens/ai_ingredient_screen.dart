@@ -319,15 +319,6 @@ class _SearchBox extends StatelessWidget {
                     style: Daana.serif(size: 22, height: 1.0),
                   ),
                 ),
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Daana.ink08,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Center(child: DaanaIcon('mic', size: 15)),
-                ),
               ],
             ),
             const SizedBox(height: 14),
