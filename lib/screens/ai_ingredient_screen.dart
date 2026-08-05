@@ -135,9 +135,7 @@ class _AIIngredientScreenState extends State<AIIngredientScreen> {
             SliverToBoxAdapter(
               child: _SearchBox(controller: _controller, onSearch: _onSearch),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            const SliverToBoxAdapter(child: _Suggestions()),
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -333,30 +331,6 @@ class _SearchBox extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Suggestions extends StatelessWidget {
-  const _Suggestions();
-  @override
-  Widget build(BuildContext context) {
-    final s = [
-      'Aloo gosht',
-      'Daal chawal',
-      'Mutton biryani',
-      'Carbonara',
-      'Haleem',
-    ];
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: s.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) => DChip(s[i]),
       ),
     );
   }
