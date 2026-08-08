@@ -479,7 +479,7 @@ class _IngredientList extends StatelessWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${it.reqQty} · sells: ${p.unit}',
+                                '${it.reqQty} · sells: ${p.quantity?.trim().isNotEmpty == true ? p.quantity!.trim() : p.unit}',
                                 style: Daana.sans(size: 11, color: Daana.ink50),
                               ),
                             ],

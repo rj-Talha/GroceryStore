@@ -535,7 +535,7 @@ class _AddressBarState extends State<_AddressBar> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
+                        const Eyebrow('Delivering today 6 am - 10 pm', size: 9.5),
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -543,13 +543,11 @@ class _AddressBarState extends State<_AddressBar> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'DHA Phase VI',
+                                'Rawat, Islamabad',
                                 style: Daana.sans(size: 13),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            DaanaIcon('chevD', size: 14, color: Daana.ink50),
                           ],
                         ),
                       ],
@@ -617,15 +615,13 @@ class _AddressBarState extends State<_AddressBar> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
+                          const Eyebrow('Delivering today 6 am - 10 pm', size: 9.5),
                           const SizedBox(height: 4),
                           Row(
                             children: [
                               DaanaIcon('pin', size: 15, color: Daana.moss),
                               const SizedBox(width: 6),
-                              Text('DHA Phase VI', style: Daana.sans(size: 15)),
-                              const SizedBox(width: 4),
-                              DaanaIcon('chevD', size: 14, color: Daana.ink50),
+                              Text('Rawat, Islamabad', style: Daana.sans(size: 15)),
                             ],
                           ),
                         ],

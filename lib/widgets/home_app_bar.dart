@@ -100,7 +100,7 @@ class _HomeAppBarState extends State<HomeAppBar> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
+                            const Eyebrow('Delivering today 6 am - 10 pm', size: 9.5),
                             const SizedBox(height: 4),
                             Row(
                               children: [
@@ -108,13 +108,11 @@ class _HomeAppBarState extends State<HomeAppBar> {
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
-                                    'DHA Phase VI',
+                                    'Rawat, Islamabad',
                                     style: Daana.sans(size: 13),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                DaanaIcon('chevD', size: 14, color: Daana.ink50),
                               ],
                             ),
                           ],
@@ -179,20 +177,18 @@ class _HomeAppBarState extends State<HomeAppBar> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Eyebrow('Delivering today, 6 – 8 pm', size: 9.5),
+                              const Eyebrow('Delivering today 6 am - 10 pm', size: 9.5),
                               const SizedBox(height: 4),
                               Row(
                                 children: [
                                   const DaanaIcon('pin', size: 15, color: Daana.moss),
                                   const SizedBox(width: 6),
                                   Flexible(
-                                    child: Text('DHA Phase VI',
+                                    child: Text('Rawat, Islamabad',
                                       style: Daana.sans(size: 15),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  DaanaIcon('chevD', size: 14, color: Daana.ink50),
                                 ],
                               ),
                             ],
