@@ -26,20 +26,7 @@ class CategoryScreen extends StatelessWidget {
   };
 
   bool _matches(Product product) {
-    final keywords = _categoryKeywords[category] ?? [category.toLowerCase()];
-    final name = product.name.toLowerCase();
-    final label = product.label.toLowerCase();
-    final key = product.key.toLowerCase();
-    final categoryLower = category.toLowerCase();
-
-    if (name.contains(categoryLower) || label.contains(categoryLower) || key.contains(categoryLower)) {
-      return true;
-    }
-
-    return keywords.any((keyword) {
-      final lowerKeyword = keyword.toLowerCase();
-      return name.contains(lowerKeyword) || label.contains(lowerKeyword) || key.contains(lowerKeyword);
-    });
+    return product.category?.trim().toLowerCase() == category.toLowerCase();
   }
 
   @override

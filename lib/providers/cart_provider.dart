@@ -17,7 +17,8 @@ class CartProvider extends ChangeNotifier {
   int get subtotal => _items.values.fold(
       0, (sum, item) => sum + (item.product.price * item.quantity));
 
-  int get deliveryFee => subtotal >= 1500 ? 0 : 149;
+  // Fixed delivery charges: Rs 149 delivery fee + Rs 49 service fee = Rs 198 total.
+  int get deliveryFee => 149;
   int get serviceFee => 49;
   
   int get total => subtotal == 0 ? 0 : subtotal + deliveryFee + serviceFee;
